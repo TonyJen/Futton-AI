@@ -1,0 +1,183 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Professional Manufacturing ERP Base Styles */
+:root {
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Dense, clean data tables */
+.table {
+  @apply w-full border-collapse text-sm;
+}
+
+.table th {
+  @apply bg-slate-50 px-4 py-3 text-left font-semibold text-slate-700 border-b border-slate-200;
+}
+
+.table td {
+  @apply px-4 py-3 text-slate-800 border-b border-slate-100;
+}
+
+.table tbody tr:hover {
+  @apply bg-slate-50/70;
+}
+
+.table tbody tr:last-child td {
+  @apply border-b-0;
+}
+
+/* Card styles - manufacturing grade */
+.card {
+  @apply bg-white rounded-xl border border-slate-200 shadow-card;
+}
+
+.card-hover {
+  @apply transition-all duration-200 hover:shadow-card-hover hover:border-slate-300;
+}
+
+/* KPI Cards */
+.kpi-card {
+  @apply bg-white rounded-2xl border border-slate-200 p-6 shadow-card transition-all hover:shadow-card-hover;
+}
+
+.kpi-value {
+  @apply text-3xl font-semibold tracking-tighter text-slate-900 tabular-nums;
+}
+
+.kpi-label {
+  @apply text-sm font-medium text-slate-500 mt-1;
+}
+
+/* Status badges */
+.badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold;
+}
+
+.badge-success { @apply bg-emerald-100 text-emerald-800; }
+.badge-warning { @apply bg-amber-100 text-amber-800; }
+.badge-danger { @apply bg-red-100 text-red-800; }
+.badge-info { @apply bg-blue-100 text-blue-800; }
+.badge-neutral { @apply bg-slate-100 text-slate-700; }
+
+/* Sidebar navigation */
+.nav-link {
+  @apply flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors;
+}
+
+.nav-link:hover {
+  @apply bg-slate-100 text-slate-900;
+}
+
+.nav-link.active {
+  @apply bg-primary-600 text-white shadow-sm;
+}
+
+/* Form elements - dense and precise */
+.input {
+  @apply w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm 
+         placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20;
+}
+
+.select {
+  @apply w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm 
+         focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20;
+}
+
+/* Buttons - shadcn-like */
+.btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold 
+         transition-all active:scale-[0.985] disabled:opacity-60 disabled:pointer-events-none;
+}
+
+.btn-primary {
+  @apply bg-primary-600 text-white hover:bg-primary-700 shadow-sm;
+}
+
+.btn-secondary {
+  @apply bg-white text-slate-700 border border-slate-300 hover:bg-slate-50;
+}
+
+.btn-ghost {
+  @apply text-slate-600 hover:bg-slate-100 hover:text-slate-900;
+}
+
+.btn-danger {
+  @apply bg-red-600 text-white hover:bg-red-700;
+}
+
+/* Modal / Dialog */
+.modal-overlay {
+  @apply fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4;
+}
+
+.modal-content {
+  @apply bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col border border-slate-200;
+}
+
+/* Agent cards and recommendations */
+.agent-card {
+  @apply card p-6 flex flex-col h-full transition-all hover:-translate-y-0.5;
+}
+
+.recommendation-card {
+  @apply border border-slate-200 bg-white rounded-xl p-5 flex flex-col gap-3;
+}
+
+/* Charts container */
+.chart-container {
+  @apply bg-white rounded-2xl border border-slate-200 p-6;
+}
+
+/* Production progress */
+.progress {
+  @apply h-2 bg-slate-100 rounded-full overflow-hidden;
+}
+
+.progress-bar {
+  @apply h-full bg-primary-600 transition-all duration-500;
+}
+
+/* Toast container handled by sonner - override for manufacturing tone */
+[data-sonner-toaster] {
+  --normal-bg: #fff;
+  --normal-text: #0f172a;
+  --normal-border: #e2e8f0;
+}
+
+/* Scrollbars for data heavy pages */
+.data-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f8fafc;
+}
+
+.data-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.data-scroll::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 3px;
+}
+
+/* Page header */
+.page-header {
+  @apply flex items-center justify-between border-b border-slate-200 pb-6 mb-8;
+}
+
+.page-title {
+  @apply text-2xl font-semibold tracking-tight text-slate-900;
+}
+
+/* AI Section highlight */
+.ai-section {
+  @apply bg-gradient-to-br from-primary-50 to-white border border-primary-100 rounded-2xl p-6;
+}

@@ -1,0 +1,36 @@
+# Funton AI Manufacturing ERP - Backend (Phase 1)
+# Python 3.11+
+
+# Core Web Framework
+fastapi>=0.111.0
+uvicorn[standard]>=0.30.1
+python-dotenv>=1.0.1
+
+# Database
+sqlalchemy>=2.0.30
+aiosqlite>=0.20.0
+alembic>=1.13.1
+pydantic>=2.7.4
+pydantic-settings>=2.3.3
+
+# Utilities
+python-multipart>=0.0.9
+httpx>=0.27.0
+
+# Dev / Testing (optional for Phase 1)
+# pytest>=8.2.2
+# pytest-asyncio>=0.23.7
+# httpx>=0.27.0  (already above)
+
+# AI Agents - LangGraph (Wave 2 / Phase 1 MVP - MRP + Inventory agents with HITL)
+langchain>=0.2.5
+langgraph>=0.2.0
+langchain-core>=0.2.0
+
+# LLM Providers (install the ones you use; others optional)
+langchain-groq>=0.1.0
+langchain-openai>=0.1.8
+langchain-anthropic>=0.1.15
+# For local: langchain-ollama (add if needed)
+
+# HTTP for tools if external data needed (already have httpx)

@@ -1,0 +1,152 @@
+"""
+Funton AI Manufacturing ERP - Main FastAPI Application (Phase 1)
+
+Wires together:
+- Core DB (async SQLAlchemy + aiosqlite)
+- All API routers including the star feature: /api/v1/agents
+- Lifespan events for startup/shutdown
+- CORS for the React frontend
+
+This file + the agents/ package is what makes the AI the most important differentiator.
+"""
+
+import logging
+from contextlib import asynccontextmanager
+from typing import AsyncGenerator
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+
+from app.core.config import get_settings
+from app.db.session import close_db, init_db
+# Try to import the agents router from the new location first
+try:
+    from app.api.routers.agents import router as agents_router
+except ImportError:
+    try:
+        from app.agents.router import router as agents_router
+    except ImportError:
+        agents_router = None
+        import logging
+        logging.getLogger("funton.main").warning("AI Agents router not found - AI features disabled")
+
+# Import other routers when they exist (Phase 1 scaffolding)
+# from app.api.routers import items, inventory, production, etc.
+
+settings = get_settings()
+
+# Configure logging (excellent observability for agents too)
+logging.basicConfig(
+    level=logging.INFO if not settings.DEBUG else logging.DEBUG,
+    format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
+)
+logger = logging.getLogger("funton.main")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator:
+    """Application lifespan manager."""
+    logger.info("=== Starting Funton AI Manufacturing ERP ===")
+    logger.info(f"Version: {settings.APP_VERSION}")
+    logger.info(f"Database: {settings.DATABASE_URL}")
+
+    # Optional: auto-create tables in dev (prefer Alembic in real deploys)
+    if settings.DEBUG:
+        try:
+            await init_db()
+            logger.info("Database tables ensured (dev mode)")
+        except Exception as e:
+            logger.warning(f"init_db note: {e}")
+
+    yield
+
+    logger.info("Shutting down...")
+    await close_db()
+    logger.info("=== Shutdown complete ===")
+
+
+app = FastAPI(
+    title=settings.APP_NAME,
+    version=settings.APP_VERSION,
+    description="AI-Powered Futon Manufacturing ERP with LangGraph Agents and Human-in-the-Loop Approval",
+    lifespan=lifespan,
+    docs_url="/docs",
+    redoc_url="/redoc",
+)
+
+# CORS - critical for frontend dev
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+# =============================================================================
+# ROOT & HEALTH
+# =============================================================================
+
+@app.get("/")
+async def root():
+    return {
+        "app": settings.APP_NAME,
+        "version": settings.APP_VERSION,
+        "status": "operational",
+        "ai_agents": "Phase 1 MVP active (MRP + Inventory + Supervisor + Full HITL)",
+        "docs": "/docs",
+        "agents_hub": "/api/v1/agents",
+    }
+
+
+@app.get("/health")
+async def health():
+    return {
+        "status": "healthy",
+        "phase": "1 - Core + Two Production Agents with Rock-Solid Approval",
+    }
+
+
+# =============================================================================
+# API ROUTERS
+# =============================================================================
+
+# Mount the Agents router (the star of the show)
+if agents_router is not None:
+    app.include_router(agents_router, prefix=settings.API_V1_PREFIX)
+else:
+    logger.warning("AI Agents router could not be loaded")
+
+# Future routers (scaffolded for completeness)
+# app.include_router(items_router, prefix=settings.API_V1_PREFIX)
+# app.include_router(inventory_router, prefix=settings.API_V1_PREFIX)
+
+
+# =============================================================================
+# GLOBAL EXCEPTION HANDLER (good DX)
+# =============================================================================
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request, exc):
+    logger.exception("Unhandled exception")
+    return JSONResponse(
+        status_code=500,
+        content={
+            "detail": "Internal server error",
+            "error": str(exc) if settings.DEBUG else "Contact support",
+        },
+    )
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(
+        "app.main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=settings.DEBUG,
+        log_level="info",
+    )
