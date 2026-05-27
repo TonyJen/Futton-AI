@@ -10,6 +10,8 @@ import Agents from './pages/Agents';
 import Sales from './pages/Sales';
 import Quotes from './pages/Quotes';
 import Returns from './pages/Returns';
+import Purchasing from './pages/Purchasing';
+import Reports from './pages/Reports';
 
 function App() {
   return (
@@ -23,6 +25,8 @@ function App() {
         <Route path="/sales" element={<Sales />} />
         <Route path="/quotes" element={<Quotes />} />
         <Route path="/returns" element={<Returns />} />
+        <Route path="/purchasing" element={<Purchasing />} />
+        <Route path="/reports" element={<Reports />} />
         <Route path="/agents" element={<Agents />} />
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/dashboard" replace />} />

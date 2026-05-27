@@ -29,6 +29,8 @@ def get_manufacturing_tools(db: AsyncSession) -> List:
         get_item_inventory_status,
         calculate_mrp_requirements,
         run_abc_analysis,
+        get_work_center_utilization,
+        get_open_production_orders,
     ]
 
 
@@ -113,3 +115,40 @@ async def calculate_mrp_requirements(db: AsyncSession, item_id: int, quantity: f
         "gross_requirement": quantity,
         "components_required": explosion.get("components", []),
     }
+
+
+async def get_work_center_utilization(db: AsyncSession) -> List[Dict[str, Any]]:
+    """Returns current work center capacity and active orders (for scheduler)."""
+    from app.db.models import WorkCenter, ProductionOrder
+    stmt = select(WorkCenter)
+    wcs = (await db.execute(stmt)).scalars().all()
+    return [
+        {
+            "work_center_id": wc.WorkCenterID,
+            "name": wc.Name or wc.Code,
+            "capacity_per_day": wc.CapacityPerDay or 100,
+            "current_utilization": wc.CurrentUtilization or 70,
+            "active_orders": wc.ActiveOrders or 1,
+            "status": wc.Status or "Running",
+        }
+        for wc in wcs
+    ]
+
+
+async def get_open_production_orders(db: AsyncSession) -> List[Dict[str, Any]]:
+    """Returns open/released production orders for scheduling decisions."""
+    stmt = select(ProductionOrder).where(ProductionOrder.Status.in_(["Released", "Planned", "In Progress"]))
+    orders = (await db.execute(stmt)).scalars().all()
+    return [
+        {
+            "production_order_id": po.ProductionOrderID,
+            "order_number": po.OrderNumber,
+            "item_id": po.ItemID,
+            "quantity": float(po.Quantity or 0),
+            "status": po.Status,
+            "work_center": po.WorkCenter,
+            "due_date": po.DueDate,
+            "priority": po.Priority or "Normal",
+        }
+        for po in orders
+    ]

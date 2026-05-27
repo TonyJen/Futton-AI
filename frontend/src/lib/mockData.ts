@@ -88,7 +88,7 @@ export const MOCK_WORK_CENTERS: WorkCenter[] = [
 export const MOCK_AGENTS: Agent[] = [
   { id: 1, name: 'MRP & Material Planning Agent', description: 'Full BOM explosion, net requirements planning, and purchase order recommendations', category: 'Planning', lastRun: '2026-05-25T06:15:00Z', status: 'Completed', recommendationsGenerated: 7 },
   { id: 2, name: 'Inventory Intelligence Agent', description: 'ABC classification, dynamic reorder points, dead stock identification', category: 'Intelligence', lastRun: '2026-05-25T04:40:00Z', status: 'Idle', recommendationsGenerated: 4 },
-  { id: 3, name: 'Production Scheduler Agent', description: 'Capacity-aware scheduling and bottleneck resolution proposals', category: 'Operations', lastRun: '2026-05-24T22:10:00Z', status: 'Idle', recommendationsGenerated: 3 },
+  { id: 3, name: 'Production Scheduler Agent', description: 'Capacity-aware scheduling and bottleneck resolution proposals', category: 'Operations', lastRun: '2026-05-25T08:30:00Z', status: 'Idle', recommendationsGenerated: 5 },
   { id: 4, name: 'Quality & Process Agent', description: 'Defect pattern analysis and corrective action recommendations', category: 'Quality', lastRun: '2026-05-23T14:55:00Z', status: 'Idle', recommendationsGenerated: 2 },
 ];
 
@@ -355,3 +355,61 @@ export function getMockCustomers() { return [...MOCK_CUSTOMERS]; }
 export function getMockSalesOrders() { return [...MOCK_SALES_ORDERS]; }
 export function getMockReturns() { return [...MOCK_RETURNS]; }
 export function getMockSalesReps() { return [...MOCK_SALES_REPS]; }
+
+// ============================================
+// PHASE 3 - PURCHASING (Suppliers + Purchase Orders + Receiving)
+// ============================================
+
+export const MOCK_SUPPLIERS: any[] = [
+  { supplierId: 1, supplierCode: 'SUP-001', supplierName: 'Oak Valley Lumber', contactName: 'Tom Hendricks', email: 'tom@oakvalley.com', city: 'Eugene', state: 'OR', rating: 4.8, isActive: true },
+  { supplierId: 2, supplierCode: 'SUP-002', supplierName: 'Pacific Foam Co.', contactName: 'Lisa Chen', email: 'lisa@pacificfoam.com', city: 'Portland', state: 'OR', rating: 4.5, isActive: true },
+  { supplierId: 3, supplierCode: 'SUP-003', supplierName: 'SpringTech Components', contactName: 'Raj Patel', email: 'raj@springtech.com', city: 'Seattle', state: 'WA', rating: 4.2, isActive: true },
+  { supplierId: 4, supplierCode: 'SUP-004', supplierName: 'Textile Mills Northwest', contactName: 'Maria Lopez', email: 'maria@tmnw.com', city: 'Boise', state: 'ID', rating: 4.0, isActive: true },
+];
+
+export const MOCK_PURCHASE_ORDERS: any[] = [
+  {
+    poId: 101,
+    poNumber: 'PO-2026-0101',
+    supplierId: 1,
+    supplierName: 'Oak Valley Lumber',
+    warehouseId: 1,
+    warehouseName: 'Main Plant',
+    orderDate: '2026-05-22',
+    expectedDeliveryDate: '2026-05-30',
+    status: 'Partial',
+    subtotal: 3720,
+    taxAmount: 0,
+    shippingAmount: 185,
+    totalAmount: 3905,
+    createdBy: 'AI Agent (approved by Elena)',
+    details: [
+      { poDetailId: 1, itemId: 4, itemCode: 'RM-010', itemName: 'Oak Lumber 4x4x96"', quantity: 120, unitPrice: 31.00, quantityReceived: 80 },
+    ],
+  },
+  {
+    poId: 102,
+    poNumber: 'PO-2026-0102',
+    supplierId: 2,
+    supplierName: 'Pacific Foam Co.',
+    warehouseId: 1,
+    warehouseName: 'Main Plant',
+    orderDate: '2026-05-24',
+    expectedDeliveryDate: '2026-06-01',
+    status: 'Draft',
+    subtotal: 1611,
+    taxAmount: 0,
+    shippingAmount: 95,
+    totalAmount: 1706,
+    createdBy: 'Elena Rodriguez',
+    details: [
+      { poDetailId: 2, itemId: 6, itemCode: 'RM-020', itemName: 'High-Density Foam 3"', quantity: 180, unitPrice: 8.95, quantityReceived: 0 },
+    ],
+  },
+];
+
+export function getMockSuppliers() { return [...MOCK_SUPPLIERS]; }
+export function getMockPurchaseOrders() { return [...MOCK_PURCHASE_ORDERS]; }
+export function getMockPurchaseOrderById(id: number) {
+  return MOCK_PURCHASE_ORDERS.find((p: any) => p.poId === id);
+}

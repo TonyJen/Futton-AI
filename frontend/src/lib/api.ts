@@ -357,6 +357,69 @@ export async function getSalesReps(): Promise<any[]> {
   return res.data;
 }
 
+// ============================================
+// PURCHASING (Phase 3)
+// ============================================
+
+export async function getSuppliers(): Promise<any[]> {
+  if (USE_MOCK) {
+    await delay(150);
+    return mock.getMockSuppliers();
+  }
+  const res = await api.get('/purchasing/suppliers');
+  return res.data;
+}
+
+export async function getPurchaseOrders(status?: string): Promise<any[]> {
+  if (USE_MOCK) {
+    await delay(180);
+    let pos = mock.getMockPurchaseOrders();
+    if (status && status !== 'All') pos = pos.filter((p: any) => p.status === status);
+    return pos;
+  }
+  const res = await api.get('/purchasing/purchase-orders', { params: { status } });
+  return res.data;
+}
+
+export async function getPurchaseOrder(poId: number): Promise<any> {
+  if (USE_MOCK) {
+    await delay(140);
+    return mock.getMockPurchaseOrderById(poId);
+  }
+  const res = await api.get(`/purchasing/purchase-orders/${poId}`);
+  return res.data;
+}
+
+export async function createPurchaseOrder(payload: any): Promise<any> {
+  if (USE_MOCK) {
+    await delay(280);
+    const newPo = {
+      poId: Math.floor(Math.random() * 800) + 200,
+      poNumber: `PO-2026-${String(Math.floor(Math.random() * 9000) + 1000).padStart(4, '0')}`,
+      ...payload,
+      status: 'Draft',
+      orderDate: new Date().toISOString().slice(0, 10),
+    };
+    return newPo;
+  }
+  const res = await api.post('/purchasing/purchase-orders', payload);
+  return res.data;
+}
+
+export async function receiveGoods(poId: number, payload: any): Promise<any> {
+  if (USE_MOCK) {
+    await delay(350);
+    return {
+      success: true,
+      purchaseOrderId: poId,
+      status: 'Partial',
+      message: 'Goods received and inventory updated',
+    };
+  }
+  const res = await api.post(`/purchasing/purchase-orders/${poId}/receive`, payload);
+  return res.data;
+}
+
 // Helper: normalize camelCase UI payload -> PascalCase backend schema for quotes
 function toPascalQuotePayload(p: any) {
   return {

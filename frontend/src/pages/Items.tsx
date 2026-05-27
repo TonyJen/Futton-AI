@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/Input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table';
 import { Modal } from '@/components/ui/Modal';
 import { BOMTree } from '@/components/manufacturing/BOMTree';
+import { BOMFlow } from '@/components/manufacturing/BOMFlow';
 import { Badge } from '@/components/ui/Badge';
 import { formatCurrency } from '@/lib/utils';
 import { Search, Eye } from 'lucide-react';
@@ -110,12 +111,23 @@ export default function Items() {
         title={selectedItem ? `BOM: ${selectedItem.itemCode} — ${selectedItem.itemName}` : ''}
         size="lg"
       >
-        {selectedItem && <BOMTree components={bomData} rootItemName={selectedItem.itemName} />}
+        {selectedItem && (
+          <>
+            <div className="mb-3 text-xs font-medium text-slate-500">Interactive Visualizer (drag nodes • zoom • click for details)</div>
+            <BOMFlow components={bomData} rootItemName={selectedItem.itemName} />
+
+            <div className="mt-6 text-xs font-medium text-slate-500 mb-2">Text Tree (detailed)</div>
+            <BOMTree components={bomData} rootItemName={selectedItem.itemName} />
+          </>
+        )}
         
-        <div className="mt-8 pt-6 border-t text-xs text-slate-500">
-          All quantities are per finished unit. Scrap rates applied automatically in MRP calculations.
+        <div className="mt-6 pt-4 border-t text-xs text-slate-500">
+          All quantities per finished unit. Visual + recursive explosion used by MRP agent.
         </div>
       </Modal>
+    </div>
+  );
+}
     </div>
   );
 }

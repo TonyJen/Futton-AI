@@ -36,6 +36,7 @@ except ImportError:
 # Import the two concrete agents (LangGraph)
 from app.agents.mrp_agent import MRPPlanningAgent
 from app.agents.inventory_agent import InventoryIntelligenceAgent
+from app.agents.production_scheduler_agent import ProductionSchedulerAgent
 
 router = APIRouter(prefix="/agents", tags=["AI Agents (Phase 1)"])
 
@@ -54,6 +55,11 @@ async def available_agents() -> Dict[str, Any]:
             "description": "ABC analysis, slow mover detection, dynamic reorder suggestions.",
             "status": "production",
         },
+        "production_scheduler": {
+            "name": "Production Scheduler Agent",
+            "description": "Capacity-aware scheduling, bottleneck detection, proposes release of production orders on available work centers.",
+            "status": "production",
+        },
     }
 
 
@@ -69,6 +75,9 @@ async def run_agent(
             result = await agent.run(req.params)
         elif req.agent_name == "inventory":
             agent = InventoryIntelligenceAgent(db)
+            result = await agent.run(req.params)
+        elif req.agent_name in ("production_scheduler", "scheduler"):
+            agent = ProductionSchedulerAgent(db)
             result = await agent.run(req.params)
         else:
             raise HTTPException(400, f"Unknown agent: {req.agent_name}")
