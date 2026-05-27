@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Background rounded square matching the app's brand -->
+  <rect 
+    x="0" 
+    y="0" 
+    width="32" 
+    height="32" 
+    rx="8" 
+    ry="8" 
+    fill="#6366f1"
+  />
+  
+  <!-- Stylized "F" for Funton -->
+  <g fill="#ffffff">
+    <!-- Vertical bar of F -->
+    <rect x="8" y="7" width="4" height="18" rx="1"/>
+    
+    <!-- Top horizontal of F -->
+    <rect x="8" y="7" width="14" height="4" rx="1"/>
+    
+    <!-- Middle horizontal of F -->
+    <rect x="8" y="13.5" width="11" height="4" rx="1"/>
+  </g>
+</svg>

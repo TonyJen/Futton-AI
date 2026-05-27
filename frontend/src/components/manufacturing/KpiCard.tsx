@@ -14,18 +14,18 @@ interface KpiCardProps {
 export function KpiCard({ label, value, change, changeType = 'neutral', icon, suffix }: KpiCardProps) {
   return (
     <Card className="kpi-card">
-      <div className="flex items-start justify-between">
-        <div>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
           <div className="kpi-label">{label}</div>
-          <div className="kpi-value mt-1.5">
+          <div className="kpi-value mt-1">
             {value}
-            {suffix && <span className="text-2xl font-medium text-slate-400 ml-0.5">{suffix}</span>}
+            {suffix && <span className="text-xl font-medium text-slate-400 ml-0.5">{suffix}</span>}
           </div>
         </div>
         {icon && (
           <div className="text-primary-600 flex-shrink-0 mt-0.5">
             {React.cloneElement(icon as React.ReactElement<any>, { 
-              className: "h-5 w-5" 
+              className: "h-4 w-4" 
             })}
           </div>
         )}

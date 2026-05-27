@@ -24,8 +24,22 @@ export function Sidebar() {
       {/* Logo / Brand */}
       <div className="h-16 px-6 flex items-center border-b border-slate-200">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-primary-600 flex items-center justify-center">
-            <span className="text-white font-bold text-xl tracking-[-1.5px]">F</span>
+          <div className="w-9 h-9 rounded-xl bg-primary-600 flex items-center justify-center overflow-hidden">
+            <svg 
+              width="22" 
+              height="22" 
+              viewBox="0 0 32 32" 
+              fill="none" 
+              xmlns="http://www.w3.org/2000/svg"
+              className="text-white"
+            >
+              {/* Vertical bar */}
+              <rect x="8" y="7" width="4" height="18" rx="1" fill="currentColor"/>
+              {/* Top bar */}
+              <rect x="8" y="7" width="14" height="4" rx="1" fill="currentColor"/>
+              {/* Middle bar */}
+              <rect x="8" y="13.5" width="11" height="4" rx="1" fill="currentColor"/>
+            </svg>
           </div>
           <div>
             <div className="font-semibold tracking-tight text-xl text-slate-900">Funton AI</div>
