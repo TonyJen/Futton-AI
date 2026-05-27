@@ -114,11 +114,13 @@ async def approve_action_endpoint(
         if not action or action.Status != "proposed":
             raise HTTPException(400, "Action not in proposed state")
 
+        import json
         executor = await get_executor(db)
+        payload = json.loads(action.ProposedPayloadJson) if isinstance(action.ProposedPayloadJson, str) else action.ProposedPayloadJson
         exec_result = await executor.execute_proposal(
             {
                 "action_type": action.ActionType,
-                "payload": action.ProposedPayloadJson,
+                "payload": payload,
             },
             approved_by=body.approved_by,
         )

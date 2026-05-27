@@ -61,7 +61,7 @@ async def find_low_stock_and_shortages(db: AsyncSession, threshold_multiplier: f
     stmt = (
         select(Inventory, Item)
         .join(Item, Inventory.ItemID == Item.ItemID)
-        .where(Inventory.QuantityAvailable < Item.ReorderPoint * threshold_multiplier)
+        .where(Inventory.QuantityOnHand < Item.ReorderPoint * threshold_multiplier)
     )
     rows = (await db.execute(stmt)).all()
 
@@ -70,9 +70,9 @@ async def find_low_stock_and_shortages(db: AsyncSession, threshold_multiplier: f
         results.append({
             "item_id": item.ItemID,
             "item_name": item.ItemName,
-            "quantity_available": float(inv.QuantityAvailable or 0),
+            "quantity_available": float(inv.QuantityOnHand or 0),
             "reorder_point": float(item.ReorderPoint or 0),
-            "shortage": float(item.ReorderPoint or 0) - float(inv.QuantityAvailable or 0),
+            "shortage": float(item.ReorderPoint or 0) - float(inv.QuantityOnHand or 0),
         })
     return results
 
