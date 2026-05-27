@@ -109,3 +109,5 @@ htmlcov/
 # Keep the SQL seed file (source of truth), but ignore compiled DBs
 !data/futon_manufacturing_sqlite.sql
 !backend/data/futon_manufacturing_sqlite.sql
+backend/data/futon_manufacturing.db-shm
+backend/data/futon_manufacturing.db-wal

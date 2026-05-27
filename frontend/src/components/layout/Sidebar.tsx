@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
-  LayoutDashboard, Package, Boxes, Factory, Users, Bot, TrendingUp, Settings
+  LayoutDashboard, Package, Boxes, Factory, Bot, TrendingUp, Settings, FileText, RotateCcw
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -11,6 +11,8 @@ const navItems = [
   { to: '/inventory', label: 'Inventory', icon: Boxes },
   { to: '/production', label: 'Production', icon: Factory },
   { to: '/sales', label: 'Sales', icon: TrendingUp },
+  { to: '/quotes', label: 'Quotes', icon: FileText },
+  { to: '/returns', label: 'Returns', icon: RotateCcw },
   { to: '/agents', label: 'AI Agents Hub', icon: Bot },
 ];
 

@@ -7,7 +7,9 @@ import Items from './pages/Items';
 import Inventory from './pages/Inventory';
 import Production from './pages/Production';
 import Agents from './pages/Agents';
-import Sales from './pages/Sales'; // Included for full manufacturing coverage
+import Sales from './pages/Sales';
+import Quotes from './pages/Quotes';
+import Returns from './pages/Returns';
 
 function App() {
   return (
@@ -19,6 +21,8 @@ function App() {
         <Route path="/inventory" element={<Inventory />} />
         <Route path="/production" element={<Production />} />
         <Route path="/sales" element={<Sales />} />
+        <Route path="/quotes" element={<Quotes />} />
+        <Route path="/returns" element={<Returns />} />
         <Route path="/agents" element={<Agents />} />
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/dashboard" replace />} />

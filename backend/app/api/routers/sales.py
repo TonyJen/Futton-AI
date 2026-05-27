@@ -12,7 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.core.deps import get_db
-from app.db.models import Customer, SalesOrder, SalesQuote, SalesReturn
+from app.db.models import Customer, SalesOrder, SalesQuote, SalesReturn, SalesRep
 from app.schemas.common import MessageResponse
 from app.schemas.sales import (
     CustomerCreate,
@@ -26,6 +26,7 @@ from app.schemas.sales import (
     SalesQuoteRead,
     SalesReturnCreate,
     SalesReturnRead,
+    SalesRepRead,
 )
 from app.services.sales_service import create_quote, convert_quote_to_order, create_return
 
@@ -184,3 +185,30 @@ async def create_sales_return(payload: SalesReturnCreate, db=Depends(get_db)):
 async def list_returns(db=Depends(get_db)):
     result = await db.execute(select(SalesReturn).order_by(SalesReturn.ReturnID.desc()))
     return [SalesReturnRead.model_validate(r) for r in result.scalars().all()]
+
+
+# =============================================================================
+# SALES REPS (basic list for CRM)
+# =============================================================================
+
+@router.get("/reps", response_model=List[SalesRepRead])
+async def list_sales_reps(db=Depends(get_db)):
+    result = await db.execute(select(SalesRep).where(SalesRep.IsActive.is_(True)))
+    return [SalesRepRead.model_validate(r) for r in result.scalars().all()]
+
+
+# =============================================================================
+# QUOTE STATUS (for workflow buttons: Draft -> Sent -> Accepted)
+# =============================================================================
+
+@router.patch("/quotes/{quote_id}/status", response_model=SalesQuoteRead)
+async def update_quote_status(quote_id: int, payload: dict, db=Depends(get_db)):
+    quote = await db.get(SalesQuote, quote_id)
+    if not quote:
+        raise HTTPException(404, "Quote not found")
+    new_status = payload.get("status") if isinstance(payload, dict) else None
+    if new_status:
+        quote.Status = new_status
+    await db.flush()
+    await db.refresh(quote)
+    return SalesQuoteRead.model_validate(quote)
