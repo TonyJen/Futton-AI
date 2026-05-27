@@ -8,6 +8,25 @@ Funton AI is a modern, full-stack manufacturing execution platform built for a f
 
 ---
 
+## Screen Shots
+
+### Dashboard
+
+<img width="1887" height="858" alt="image" src="https://github.com/user-attachments/assets/a2304b81-73da-4e69-8ddf-6c5515bef498" />
+
+### Sales
+
+<img width="1857" height="855" alt="image" src="https://github.com/user-attachments/assets/47e04ab0-2470-4257-a946-c6a8bce4f3c2" />
+
+### Inventory
+
+<img width="1886" height="857" alt="image" src="https://github.com/user-attachments/assets/87a8794d-1ab5-4cc8-af31-6bcd1cd1c110" />
+
+### 
+
+
+
+
 ## Features
 
 ### Core ERP Capabilities
