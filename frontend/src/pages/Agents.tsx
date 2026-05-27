@@ -18,9 +18,14 @@ export default function Agents() {
   const [runningAgent, setRunningAgent] = useState<number | null>(null);
   const [chatInput, setChatInput] = useState('');
   const [chatHistory, setChatHistory] = useState<Array<{ role: 'user' | 'agent'; text: string }>>([
-    { role: 'agent', text: 'Hello! I\'m the Funton AI Supervisor. I\'m powered by an LLM on the backend. Ask me about inventory, production, demand, or what the agents should focus on.' }
+    { role: 'agent', text: 'Hello! I\'m the Funton AI Supervisor (powered by real LLM). Make sure the backend is running (uvicorn on port 8000) for real responses. Ask me about inventory, production, demand, etc.' }
   ]);
   const [processingRec, setProcessingRec] = useState<number | null>(null);
+
+  // Simple context for the Supervisor chat so we can act on "yes"
+  const [supervisorContext, setSupervisorContext] = useState<{
+    lastSuggestedAgents?: number[];
+  }>({});
 
   const { data: agents = [] } = useQuery({ queryKey: ['agents'], queryFn: getAgents });
   const { data: recommendations = [] } = useQuery({ 
@@ -63,15 +68,26 @@ export default function Agents() {
 
   const handleRunAgent = (id: number) => runAgentMutation.mutate(id);
 
-  // Real AI Supervisor powered by backend LLM (with full conversation context)
+  // Real AI Supervisor powered by backend LLM
   const handleChat = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!chatInput.trim()) return;
 
     const userMsg = chatInput.trim();
+    const lowerMsg = userMsg.toLowerCase();
 
     setChatHistory(prev => [...prev, { role: 'user', text: userMsg }]);
     setChatInput('');
+
+    // Detect affirmative intent for running agents
+    const isAffirmative = 
+      lowerMsg.includes('yes') || 
+      lowerMsg.includes('sure') || 
+      lowerMsg.includes('go ahead') || 
+      lowerMsg.includes('do it') || 
+      lowerMsg.includes('run it') || 
+      lowerMsg.includes('trigger') ||
+      lowerMsg.includes('both');
 
     try {
       const historyForBackend = chatHistory.map(m => ({
@@ -82,20 +98,48 @@ export default function Agents() {
 
       const result = await chatWithSupervisor(historyForBackend);
 
+      // Show the clean LLM response
       setChatHistory(prev => [...prev, { role: 'agent', text: result.response }]);
 
-      if (result.suggested_agent) {
-        setTimeout(() => {
-          setChatHistory(prev => [
-            ...prev,
-            { role: 'agent', text: `Would you like me to run the ${result.suggested_agent} agent?` }
-          ]);
-        }, 400);
+      // If user said yes and we have pending suggestions from context, actually run them
+      if (isAffirmative && supervisorContext.lastSuggestedAgents?.length) {
+        const agentsToRun = [...supervisorContext.lastSuggestedAgents];
+
+        // If user said "both", try to run the other two agents as well
+        if (lowerMsg.includes('both')) {
+          const all = [1, 2, 3];
+          agentsToRun.push(...all.filter(id => !agentsToRun.includes(id)));
+        }
+
+        agentsToRun.forEach((agentId, index) => {
+          setTimeout(() => {
+            runAgentMutation.mutate(agentId);
+          }, index * 250);
+        });
+
+        setSupervisorContext({});
+      } 
+      else if (result.suggested_agent) {
+        // Map the lightweight suggestion from backend to numeric ID(s)
+        const nameToId: Record<string, number> = {
+          'mrp': 1,
+          'inventory': 2,
+          'production_scheduler': 3,
+          'inventory intelligence': 2,
+          'production scheduler': 3,
+        };
+
+        const suggestedId = nameToId[result.suggested_agent.toLowerCase()];
+        if (suggestedId) {
+          setSupervisorContext({ lastSuggestedAgents: [suggestedId] });
+        }
       }
-    } catch (err) {
+    } catch (err: any) {
+      console.error('AI Supervisor call failed:', err);
+      const errorMsg = err?.message || 'Unknown network error';
       setChatHistory(prev => [
         ...prev,
-        { role: 'agent', text: "I couldn't connect to the AI Supervisor right now. Is the backend running?" }
+        { role: 'agent', text: `I couldn't connect to the AI Supervisor. Is the backend running on port 8000? (Error: ${errorMsg})` }
       ]);
     }
   };
@@ -112,7 +156,7 @@ export default function Agents() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-primary-700">
             <Bot className="h-5 w-5" /> Ask the AI Supervisor
-            <Badge variant="neutral" className="text-[10px] ml-1">LLM</Badge>
+            <Badge variant="success" className="text-[10px] ml-1">Real LLM (requires backend)</Badge>
           </CardTitle>
         </CardHeader>
         <CardContent>

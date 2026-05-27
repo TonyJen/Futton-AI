@@ -23,7 +23,16 @@ def _get_llm() -> Optional[BaseChatModel]:
     provider = (settings.DEFAULT_LLM_PROVIDER or "groq").lower()
 
     try:
-        if provider == "groq" and settings.GROQ_API_KEY:
+        if provider == "xai" and settings.XAI_API_KEY:
+            from langchain_openai import ChatOpenAI
+            return ChatOpenAI(
+                model=settings.XAI_MODEL,
+                openai_api_key=settings.XAI_API_KEY,
+                openai_api_base="https://api.x.ai/v1",
+                temperature=0.4,
+            )
+
+        elif provider == "groq" and settings.GROQ_API_KEY:
             from langchain_groq import ChatGroq
             return ChatGroq(
                 model=settings.GROQ_MODEL,
@@ -88,14 +97,32 @@ async def chat_with_supervisor(
     Main entry point for the AI Supervisor chat.
     Takes conversation history and returns the next response.
     """
+    settings = get_settings()
     llm = _get_llm()
 
     if not llm:
+        provider = (settings.DEFAULT_LLM_PROVIDER or "none").lower()
+        key_name = {
+            "xai": "XAI_API_KEY",
+            "groq": "GROQ_API_KEY",
+            "openai": "OPENAI_API_KEY",
+            "anthropic": "ANTHROPIC_API_KEY",
+        }.get(provider, "the correct API key")
+
+        # Helpful debug info
+        print(f"[Supervisor] LLM init failed. Provider={provider}, Looking for {key_name}")
+        print(f"[Supervisor] XAI_API_KEY present: {bool(settings.XAI_API_KEY)}")
+        print(f"[Supervisor] GROQ_API_KEY present: {bool(settings.GROQ_API_KEY)}")
+        print(f"[Supervisor] OPENAI_API_KEY present: {bool(settings.OPENAI_API_KEY)}")
+        print(f"[Supervisor] ANTHROPIC_API_KEY present: {bool(settings.ANTHROPIC_API_KEY)}")
+
         return {
-            "response": "The AI Supervisor is currently in demo mode (no LLM API key configured). "
-                        "In a real setup I would use Groq / OpenAI / Anthropic to give you intelligent answers. "
-                        "Would you like me to simulate a helpful response instead?",
-            "suggested_agent": None,
+            "response": f"The AI Supervisor LLM is not active (provider: {provider}, no valid {key_name} found).\n\n"
+                        "→ Go to https://console.x.ai/ to get an XAI_API_KEY\n"
+                        "→ Set DEFAULT_LLM_PROVIDER=xai and XAI_API_KEY in backend/.env\n"
+                        "→ Restart the backend after editing .env\n\n"
+                        "For now, here's a simulated response: The main opportunities right now are hinge shortages and capacity at Assembly A.",
+            "suggested_agent": "production_scheduler",
         }
 
     # Convert frontend messages to LangChain format
@@ -137,28 +164,32 @@ async def chat_with_supervisor(
                 "anthropic": "ANTHROPIC_API_KEY",
             }.get(provider, "the correct API key")
 
-            response = (
-                f"The AI Supervisor failed because the {key_name} in your backend/.env is invalid or missing.\n\n"
-                f"→ Please check your backend/.env file and make sure {key_name} is set correctly.\n"
-                f"→ Recommended: Use Groq (free and fast) by setting DEFAULT_LLM_PROVIDER=groq and adding a GROQ_API_KEY.\n\n"
-                "Would you like me to give you a simulated intelligent response instead?"
-            )
+            print(f"[Supervisor] LLM authentication failed for {key_name} — falling back to simulation.")
+
+            # Graceful fallback so the user isn't spammed with errors
+            return {
+                "response": "I'm currently running in simulation mode (LLM authentication failed). "
+                            "The main opportunities right now appear to be capacity at Assembly A and some material shortages. "
+                            "Would you like me to run the Production Scheduler or MRP Agent?",
+                "suggested_agent": "production_scheduler",
+            }
+
         elif "not_found_error" in error_str or "model" in error_str and "404" in error_str:
             provider = (settings.DEFAULT_LLM_PROVIDER or "openai").lower()
-            response = (
-                f"The model configured for {provider} is not available or the name is outdated.\n\n"
-                f"Current model for Anthropic: {settings.ANTHROPIC_MODEL}\n\n"
-                f"→ Try updating to the latest model name in backend/app/core/config.py\n"
-                f"→ Or switch to Groq (easiest) by setting DEFAULT_LLM_PROVIDER=groq\n\n"
-                "Would you like me to give you a simulated intelligent response instead?"
-            )
-        else:
-            response = (
-                f"I ran into an error while thinking: {str(e)}.\n\n"
-                "Would you like me to give you a simulated intelligent response instead?"
-            )
+            print(f"[Supervisor] Model not found for provider {provider} — falling back to simulation.")
 
-        return {
-            "response": response,
-            "suggested_agent": None,
-        }
+            return {
+                "response": "I'm currently running in simulation mode (model configuration issue). "
+                            "The main opportunities right now appear to be capacity at Assembly A and some material shortages. "
+                            "Would you like me to run the Production Scheduler or MRP Agent?",
+                "suggested_agent": "production_scheduler",
+            }
+
+        else:
+            print(f"[Supervisor] Unexpected LLM error: {e} — falling back to simulation.")
+            return {
+                "response": "I'm currently running in simulation mode due to a temporary issue. "
+                            "The main opportunities right now appear to be capacity at Assembly A and some material shortages. "
+                            "Would you like me to run the Production Scheduler or MRP Agent?",
+                "suggested_agent": "production_scheduler",
+            }

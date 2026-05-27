@@ -4,6 +4,8 @@
 
 Funton AI is a modern, full-stack manufacturing execution platform built for a futon and mattress manufacturer. It combines traditional ERP capabilities with intelligent LangGraph agents that assist with material planning, inventory optimization, and decision support — all under human oversight.
 
+**The highlight** is the **AI Supervisor** — a conversational interface powered by a real LLM (xAI Grok by default) that can analyze your business and intelligently trigger specialized agents through natural language.
+
 ---
 
 ## Features
@@ -33,91 +35,84 @@ Funton AI is a modern, full-stack manufacturing execution platform built for a f
 ## Architecture
 
 ```
-┌─────────────────────┐
-│   React + Vite      │  ← Frontend (Agents Hub, Dashboards, BOM Explorer)
-│   (TypeScript)      │
-└──────────┬──────────┘
-           │ REST /api/v1
-┌──────────▼──────────┐
-│   FastAPI Backend   │
-│   (Python)          │
-│                     │
-│  ┌───────────────┐  │
-│  │  Routers      │  │
-│  └───────┬───────┘  │
-│          │          │
-│  ┌───────▼───────┐  │
-│  │   Services    │  │  ← Business logic (BOM, Inventory, Executor)
-│  └───────┬───────┘  │
-│          │          │
-│  ┌───────▼───────┐  │
-│  │ LangGraph     │  │  ← AI Agents (MRP + Inventory)
-│  │   Agents      │  │
-│  └───────┬───────┘  │
-│          │          │
-│  ┌───────▼───────┐  │
-│  │  SQLAlchemy   │  │
-│  │   + SQLite    │  │
-│  └───────────────┘  │
-└─────────────────────┘
+┌──────────────────────────────────────┐
+│   React + Vite (TypeScript)          │
+│   • Dashboards & Operations UI       │
+│   • AI Supervisor Chat  ← (LLM)      │
+│   • Agent Cards + Approval Queue     │
+│   • Interactive BOM Visualizer       │
+└───────────────────┬──────────────────┘
+                    │ REST /api/v1
+┌───────────────────▼──────────────────┐
+│            FastAPI Backend           │
+│                                      │
+│  ┌────────────────────────────────┐  │
+│  │           Routers              │  │
+│  │  • /agents                     │  │
+│  │  • /agents/supervisor/chat     │  │  ← New conversational endpoint
+│  │  • /sales, /purchasing, etc.   │  │
+│  └───────────────┬────────────────┘  │
+│                  │                   │
+│  ┌───────────────▼───────────────┐   │
+│  │          Services             │   │
+│  │  • Agent Service              │   │
+│  │  • Supervisor Service (LLM)   │   │
+│  │  • Action Executor            │   │
+│  └───────────────┬───────────────┘   │
+│                  │                   │
+│  ┌───────────────▼───────────────┐   │
+│  │         AI Layer              │   │
+│  │  • LangGraph Agents (3)       │   │
+│  │    - MRP Planning             │   │
+│  │    - Inventory Intelligence   │   │
+│  │    - Production Scheduler     │   │
+│  │  • AI Supervisor (xAI/Grok)   │   │  ← Conversational LLM
+│  └───────────────┬───────────────┘   │
+│                  │                   │
+│  ┌───────────────▼───────────────┐   │
+│  │   SQLAlchemy 2.0 + SQLite     │   │
+│  └───────────────────────────────┘   │
+└──────────────────────────────────────┘
 ```
 
-### Agent Decision Flow (Text Sequence Diagram)
+### Agent Decision Flow
 
+There are now **two main ways** to interact with agents:
+
+#### A. Traditional (Direct Agent Execution)
 ```
-User / Frontend
-      │
-      │ 1. POST /agents/run { "agent_name": "mrp", "params": {...} }
-      ▼
-Agents Router
-      │
-      │ 2. Instantiate MRPPlanningAgent
-      ▼
-LangGraph Graph
-      │
-      ├─── explode_bom (calls tools)
-      │
-      ├─── detect_shortages (calls tools)
-      │
-      └─── generate_proposals
-            │
-            └─── propose_action()  →  INSERT AgentAction (status='proposed')
-            │
-            └─── INSERT AgentAuditLog
-            │
-      Return { run_id, proposals_created, reasoning_trace }
-      │
-      ▼
-Frontend AI Hub
-      │
-      │ 3. GET /agents/proposals  →  Shows pending queue
-      │
-      │ 4. Human clicks "Approve"
-      │
-      ▼
-POST /agents/actions/{id}/approve
-      │
-      │ 5. Load AgentAction
-      │ 6. Call ActionExecutor.execute_proposal()
-      │     └── Creates real PurchaseOrder / InventoryTransaction / etc.
-      │
-      │ 7. Update AgentAction → status='executed'
-      │ 8. Write audit log
-      │
-      ▼
-Response: { success: true, execution_details: ... }
+User → Click "Run" on Agent Card
+   → POST /agents/run
+   → LangGraph Agent runs
+   → Proposals saved with status='proposed'
+   → Appear in Approval Queue
+   → Human Approves → ActionExecutor runs real changes
 ```
+
+#### B. Conversational (AI Supervisor) ← Recommended
+```
+User chats with AI Supervisor (real LLM)
+   → Supervisor analyzes business state
+   → Suggests relevant agent(s)
+   → User says "yes run the inventory agent"
+   → Frontend triggers the agent(s)
+   → Proposals appear in queue for approval
+   → Same execution path as above
+```
+
+Both paths feed into the same **Action Executor**, ensuring all AI-proposed changes go through human review.
 
 ---
 
 ## Features
 
-- **Intelligent Agents** — Two production-grade LangGraph agents with rich reasoning traces
-- **Safe AI Execution** — Strict propose-only model with mandatory human approval
-- **Rich Manufacturing Data Model** — 30+ tables including multi-level BOM, multi-warehouse inventory, production, sales, and agent audit tables
-- **Beautiful Operations UI** — Dense, professional interface designed for real factory use
-- **Full Observability** — Every agent decision is logged with tool calls and thoughts
-- **Extensible Architecture** — Clean service layer makes it easy to add more agents (Scheduler, Quality, Pricing, etc.)
+- **Intelligent Agents** — Three production-grade LangGraph agents (MRP, Inventory Intelligence, Production Scheduler)
+- **Conversational AI Supervisor** — Real LLM (xAI Grok by default) that can analyze the business and intelligently trigger agents via natural language
+- **Safe AI Execution** — Strict propose-only model with mandatory human approval (nothing executes without explicit user consent)
+- **Rich Manufacturing Data Model** — 30+ tables including multi-level BOM, multi-warehouse inventory, production, sales, purchasing, and full agent audit history
+- **Beautiful Operations UI** — Dense, professional manufacturing-grade interface
+- **Full Observability** — Every agent decision includes detailed reasoning traces and tool calls
+- **Extensible Architecture** — Clean service layer designed to easily add more agents and capabilities
 
 ---
 
@@ -126,54 +121,76 @@ Response: { success: true, execution_details: ... }
 ### Prerequisites
 - Python 3.11+
 - Node.js 18+
-- SQLite (comes with Python)
+- SQLite (included with Python)
 
-### 1. Backend Setup
+### One-Command Start (Recommended)
 
-```bash
-cd backend
+The easiest way to run everything:
 
-# Create and activate virtual environment
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1          # Windows PowerShell
-# source .venv/bin/activate           # macOS/Linux
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Create environment file (add your LLM keys if using full tool-calling later)
-copy .env.example .env
-
-# Seed the database (creates data/futon_manufacturing.db with full schema + realistic sample data)
-python -m app.db.seed
-
-# Run the API
-python -m uvicorn app.main:app --reload
+```powershell
+# Windows
+.\start.ps1
 ```
 
-The API will be available at `http://localhost:8000/docs`.
+This script will:
+- Activate the root virtual environment
+- Install backend & frontend dependencies if missing
+- Seed the database
+- Start the FastAPI backend (in a new window)
+- Start the React frontend
 
-### 2. Frontend Setup
+**Important:** The AI Supervisor uses a real LLM. You will need an API key (xAI recommended).
+
+### Manual Setup
+
+#### 1. Backend
+
+```bash
+# Create and activate virtual environment (at project root)
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1     # Windows
+# source .venv/bin/activate      # macOS/Linux
+
+# Install dependencies
+pip install -r backend/requirements.txt
+
+# Copy environment file
+cp backend/.env.example backend/.env
+# or on Windows: copy backend\.env.example backend\.env
+```
+
+Edit `backend/.env` and add your LLM key (required for the AI Supervisor):
+
+```env
+DEFAULT_LLM_PROVIDER=xai
+XAI_API_KEY=xai-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+```
+
+Seed the database and start the backend:
+
+```bash
+python data/seed.py
+cd backend
+python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+#### 2. Frontend
+
+Open a new terminal:
 
 ```bash
 cd frontend
-
-# Install dependencies
 npm install
-
-# Start development server
 npm run dev
 ```
 
 Frontend will be available at `http://localhost:5173`.
 
-### 3. Try the AI Agents
+### 3. Best Experience: Follow the Guided Demo
 
-1. Open the frontend and go to the **Agents** tab (AI Command Center)
-2. Click **Run** on the MRP Agent or Inventory Intelligence Agent
-3. Go to the proposal queue
-4. Approve or reject the generated recommendations
-5. Watch real data change in the system (new POs, updated reorder points, inventory transactions)
+For the most impressive walkthrough (especially the AI Supervisor), see:
+
+→ **[DEMO.md](./DEMO.md)** — A step-by-step script showing natural language control of agents and real business impact.
 
 ---
 
@@ -194,9 +211,10 @@ Frontend will be available at `http://localhost:5173`.
 - React Flow (future BOM visualization)
 
 **AI / Agents**
-- LangGraph StateGraphs (not simple ReAct)
+- 3 LangGraph Agents (MRP, Inventory Intelligence, Production Scheduler)
+- AI Supervisor — Real LLM (xAI Grok by default) with conversational agent orchestration
 - Human-in-the-loop approval workflow
-- Structured reasoning traces
+- Full reasoning traces + audit logging
 
 ---
 
@@ -206,9 +224,9 @@ Frontend will be available at `http://localhost:5173`.
 Funton-Ai/
 ├── backend/
 │   ├── app/
-│   │   ├── agents/           # LangGraph agents + tools + approval layer
-│   │   ├── api/routers/      # FastAPI endpoints
-│   │   ├── services/         # Business logic (BOM, Executor, etc.)
+│   │   ├── agents/           # LangGraph agents + Supervisor service
+│   │   ├── api/routers/      # FastAPI endpoints (incl. /supervisor/chat)
+│   │   ├── services/         # Business logic + Action Executor
 │   │   ├── db/               # Models + session
 │   │   └── core/             # Config + dependencies
 │   ├── tests/                # Pytest suite

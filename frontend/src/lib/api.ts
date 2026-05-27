@@ -147,7 +147,17 @@ export async function runAgent(agentId: number): Promise<{ recommendations: Agen
     const result = mock.simulateAgentRun(agentId);
     return { recommendations: result.newRecs };
   }
-  const res = await api.post(`/agents/${agentId}/run`);
+
+  // Map frontend numeric ID to backend agent_name
+  const agentNameMap: Record<number, string> = {
+    1: 'mrp',
+    2: 'inventory',
+    3: 'production_scheduler',
+  };
+
+  const agent_name = agentNameMap[agentId] || 'mrp';
+
+  const res = await api.post('/agents/run', { agent_name, params: {} });
   return res.data;
 }
 
@@ -362,20 +372,7 @@ export async function getSalesReps(): Promise<any[]> {
 // ============================================
 
 export async function chatWithSupervisor(messages: Array<{ role: string; text: string }>): Promise<{ response: string; suggested_agent?: string }> {
-  if (USE_MOCK) {
-    // Keep a lightweight simulation when mocks are on
-    await delay(450);
-    const last = messages[messages.length - 1]?.text?.toLowerCase() || '';
-
-    if (last.includes('yes') || last.includes('sure') || last.includes('run')) {
-      return { response: "Understood. Triggering the most relevant agent now...", suggested_agent: "production_scheduler" };
-    }
-    return {
-      response: "Thanks for the question. In a real setup I would use an LLM here. For now: the biggest current opportunity appears to be capacity at Assembly A and hinge shortages. Would you like me to run an agent?",
-      suggested_agent: "production_scheduler"
-    };
-  }
-
+  // Always hit the real LLM backend for the AI Supervisor
   const res = await api.post('/agents/supervisor/chat', { messages });
   return res.data;
 }

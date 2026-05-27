@@ -14,7 +14,9 @@ class Settings(BaseSettings):
     """Application settings loaded from environment variables / .env file."""
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        # Look for .env in both the backend folder and the project root
+        # (important because start.ps1 runs uvicorn from the backend/ directory)
+        env_file=(".env", "../.env"),
         env_file_encoding="utf-8",
         case_sensitive=True,
         extra="ignore",
@@ -59,12 +61,14 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str | None = None
     ANTHROPIC_API_KEY: str | None = None
     GROQ_API_KEY: str | None = None
-    DEFAULT_LLM_PROVIDER: str = "openai"  # openai | anthropic | groq | ollama
+    XAI_API_KEY: str | None = None
+    DEFAULT_LLM_PROVIDER: str = "xai"  # xai | openai | anthropic | groq | ollama
 
     # LLM Model names (you can override these)
     OPENAI_MODEL: str = "gpt-4o-mini"
-    ANTHROPIC_MODEL: str = "claude-3-5-sonnet-20241022"   # Updated from deprecated 20240620
+    ANTHROPIC_MODEL: str = "claude-3-5-sonnet-20241022"
     GROQ_MODEL: str = "llama-3.1-8b-instant"
+    XAI_MODEL: str = "grok-3"   # xAI Grok models (check console.x.ai for current names)
 
     # Security (future)
     SECRET_KEY: str = "dev-secret-key-change-in-production"

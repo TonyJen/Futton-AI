@@ -2,68 +2,71 @@
 .SYNOPSIS
     One-command launcher for the Funton AI full-stack application.
 .DESCRIPTION
-    Activates the root virtual environment, ensures dependencies are installed,
-    seeds the database if needed, then starts both the FastAPI backend and
-    the React frontend.
+    Uses the root .venv, installs dependencies if needed, seeds the database,
+    and starts both the FastAPI backend (with real LLM support for the AI Supervisor)
+    and the React frontend.
 #>
 
 Write-Host "🚀 Starting Funton AI..." -ForegroundColor Cyan
+Write-Host "   (AI Supervisor now uses real LLM - make sure you have API keys in backend/.env)" -ForegroundColor Yellow
 
-# Ensure we're in the project root
 $projectRoot = $PSScriptRoot
 Set-Location $projectRoot
 
-# --- 1. Activate root virtual environment ---
+# --- 1. Root virtual environment ---
+$venvPython = ".\.venv\Scripts\python.exe"
 $venvActivate = ".\.venv\Scripts\Activate.ps1"
 
-if (-not (Test-Path $venvActivate)) {
-    Write-Host "❌ Root virtual environment not found at .\.venv" -ForegroundColor Red
-    Write-Host "   Please create it first with: python -m venv .venv" -ForegroundColor Yellow
+if (-not (Test-Path $venvPython)) {
+    Write-Host "❌ Root virtual environment not found!" -ForegroundColor Red
+    Write-Host "   Run this first:" -ForegroundColor Yellow
+    Write-Host "   python -m venv .venv" -ForegroundColor Yellow
     exit 1
 }
 
-Write-Host "Activating virtual environment..." -ForegroundColor Gray
-. $venvActivate
+# Activate root venv for the current session
+. $venvActivate | Out-Null
 
 # --- 2. Backend setup ---
-Write-Host "`n[Backend] Checking dependencies..." -ForegroundColor Yellow
+Write-Host "`n[Backend] Preparing..." -ForegroundColor Yellow
+
 Set-Location "backend"
 
-# Install backend requirements if needed
-if (-not (Test-Path ".\.venv")) {
-    # We're using the root venv, so we check if key packages exist
-    $python = "..\.venv\Scripts\python.exe"
-    
-    & $python -c "import fastapi; import sqlalchemy; import langgraph" 2>$null
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "Installing backend dependencies..." -ForegroundColor Yellow
-        & $python -m pip install -r requirements.txt --quiet
-    }
+# Install backend dependencies if missing
+& $projectRoot\.venv\Scripts\python.exe -c "import fastapi, sqlalchemy, langgraph, langchain" 2>$null
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Installing backend dependencies (this may take a minute)..." -ForegroundColor Yellow
+    & $projectRoot\.venv\Scripts\python.exe -m pip install -r requirements.txt --quiet
 }
 
 # Seed database if it doesn't exist
 $dbPath = "data\futon_manufacturing.db"
 if (-not (Test-Path $dbPath)) {
-    Write-Host "Seeding database (this may take a moment)..." -ForegroundColor Yellow
-    & "..\.venv\Scripts\python.exe" -m app.db.seed
+    Write-Host "Seeding database..." -ForegroundColor Yellow
+    & $projectRoot\.venv\Scripts\python.exe -m data.seed 2>$null
+    if ($LASTEXITCODE -ne 0) {
+        # Fallback to root seed script
+        & $projectRoot\.venv\Scripts\python.exe "$projectRoot\data\seed.py" 2>$null
+    }
 }
 
-# Start backend in a new PowerShell window
+# Start backend in a dedicated window
 Write-Host "Starting FastAPI backend on http://localhost:8000 ..." -ForegroundColor Green
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$PSScriptRoot\backend'; ..\.venv\Scripts\Activate.ps1; python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000"
+$backendCmd = "cd '$projectRoot\backend'; & '$projectRoot\.venv\Scripts\Activate.ps1'; python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", $backendCmd -WindowStyle Normal
 
 # --- 3. Frontend setup ---
-Write-Host "`n[Frontend] Checking dependencies..." -ForegroundColor Yellow
+Write-Host "`n[Frontend] Preparing..." -ForegroundColor Yellow
 Set-Location "$projectRoot\frontend"
 
 if (-not (Test-Path "node_modules")) {
-    Write-Host "Installing frontend dependencies (this can take a minute)..." -ForegroundColor Yellow
+    Write-Host "Installing frontend dependencies..." -ForegroundColor Yellow
     npm install
 }
 
 Write-Host "Starting React frontend on http://localhost:5173 ..." -ForegroundColor Green
 npm run dev
 
-# The script will stay here while the frontend is running.
-# When you stop the frontend (Ctrl+C), this window will close.
-# The backend will continue running in its own window.
+# Keep this window open for frontend logs
+Write-Host "`n[Info] Backend is running in a separate window." -ForegroundColor Gray
+Write-Host "Press Ctrl+C here to stop the frontend (backend will keep running)." -ForegroundColor Gray

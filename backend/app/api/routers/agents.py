@@ -64,6 +64,62 @@ async def available_agents() -> Dict[str, Any]:
     }
 
 
+@router.get("")
+async def list_agents() -> List[Dict[str, Any]]:
+    """Return agents in the format expected by the frontend Agents page."""
+    return [
+        {
+            "id": 1,
+            "name": "MRP & Material Planning Agent",
+            "description": "Full BOM explosion, net requirements planning, and purchase order recommendations",
+            "category": "Planning",
+            "lastRun": "2026-05-27T10:15:00Z",
+            "status": "Idle",
+            "recommendationsGenerated": 8,
+        },
+        {
+            "id": 2,
+            "name": "Inventory Intelligence Agent",
+            "description": "ABC classification, dynamic reorder points, dead stock identification",
+            "category": "Intelligence",
+            "lastRun": "2026-05-27T09:40:00Z",
+            "status": "Idle",
+            "recommendationsGenerated": 5,
+        },
+        {
+            "id": 3,
+            "name": "Production Scheduler Agent",
+            "description": "Capacity-aware scheduling and bottleneck resolution proposals",
+            "category": "Operations",
+            "lastRun": "2026-05-27T08:20:00Z",
+            "status": "Idle",
+            "recommendationsGenerated": 6,
+        },
+    ]
+
+
+@router.get("/recommendations")
+async def list_recommendations(db: DBSessionDep, status: Optional[str] = Query(None)) -> List[Dict[str, Any]]:
+    """Return recommendations/proposals in the format expected by the frontend."""
+    svc = await get_agent_service(db)
+    proposals = await svc.get_pending_proposals(status or "proposed")
+
+    return [
+        {
+            "id": p.get("action_id"),
+            "agentName": "Supervisor",
+            "title": p.get("action_type", "Recommendation"),
+            "description": p.get("rationale", ""),
+            "impact": "",
+            "confidence": int(p.get("confidence", 75)),
+            "actionType": p.get("action_type", "ADJUST_INVENTORY"),
+            "status": p.get("status", "PENDING").upper(),
+            "createdAt": "2026-05-27T10:00:00Z",
+        }
+        for p in proposals
+    ]
+
+
 @router.post("/run", response_model=AgentRunResponse)
 async def run_agent(
     req: AgentRunRequest,

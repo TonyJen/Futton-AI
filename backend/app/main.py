@@ -66,6 +66,18 @@ logging.basicConfig(
 )
 logger = logging.getLogger("funton.main")
 
+# Helpful startup info for LLM / AI Supervisor
+llm_provider = settings.DEFAULT_LLM_PROVIDER or "none"
+has_key = bool(
+    (llm_provider == "xai" and settings.XAI_API_KEY) or
+    (llm_provider == "groq" and settings.GROQ_API_KEY) or
+    (llm_provider == "openai" and settings.OPENAI_API_KEY) or
+    (llm_provider == "anthropic" and settings.ANTHROPIC_API_KEY)
+)
+logger.info(f"LLM Provider: {llm_provider} | Key loaded: {has_key}")
+if not has_key:
+    logger.warning("No valid LLM API key found. AI Supervisor will run in simulation mode.")
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator:
