@@ -31,8 +31,31 @@ except ImportError:
         import logging
         logging.getLogger("funton.main").warning("AI Agents router not found - AI features disabled")
 
-# Import other routers when they exist (Phase 1 scaffolding)
-# from app.api.routers import items, inventory, production, etc.
+# Import other routers (Phase 2/3)
+try:
+    from app.api.routers.items import router as items_router
+except ImportError:
+    items_router = None
+
+try:
+    from app.api.routers.inventory import router as inventory_router
+except ImportError:
+    inventory_router = None
+
+try:
+    from app.api.routers.production import router as production_router
+except ImportError:
+    production_router = None
+
+try:
+    from app.api.routers.sales import router as sales_router
+except ImportError:
+    sales_router = None
+
+try:
+    from app.api.routers.purchasing import router as purchasing_router
+except ImportError:
+    purchasing_router = None
 
 settings = get_settings()
 
@@ -95,7 +118,7 @@ async def root():
         "app": settings.APP_NAME,
         "version": settings.APP_VERSION,
         "status": "operational",
-        "ai_agents": "Phase 1 MVP active (MRP + Inventory + Supervisor + Full HITL)",
+        "ai_agents": "Phase 3 - MRP + Inventory agents + full Sales/Quotes/Returns + Purchasing foundation",
         "docs": "/docs",
         "agents_hub": "/api/v1/agents",
     }
@@ -105,7 +128,7 @@ async def root():
 async def health():
     return {
         "status": "healthy",
-        "phase": "1 - Core + Two Production Agents with Rock-Solid Approval",
+        "phase": "3 - Purchasing + Sales/CRM + 2 Production Agents (full propose/approve/execute)",
     }
 
 
@@ -119,9 +142,19 @@ if agents_router is not None:
 else:
     logger.warning("AI Agents router could not be loaded")
 
-# Future routers (scaffolded for completeness)
-# app.include_router(items_router, prefix=settings.API_V1_PREFIX)
-# app.include_router(inventory_router, prefix=settings.API_V1_PREFIX)
+# Core operations routers (Phase 2+)
+if items_router:
+    app.include_router(items_router, prefix=settings.API_V1_PREFIX)
+if inventory_router:
+    app.include_router(inventory_router, prefix=settings.API_V1_PREFIX)
+if production_router:
+    app.include_router(production_router, prefix=settings.API_V1_PREFIX)
+if sales_router:
+    app.include_router(sales_router, prefix=settings.API_V1_PREFIX)
+if purchasing_router:
+    app.include_router(purchasing_router, prefix=settings.API_V1_PREFIX)
+
+# Update health to reflect progress
 
 
 # =============================================================================

@@ -18,7 +18,10 @@ from typing import Any, Dict
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from app.db.models import PurchaseOrder, PurchaseOrderDetail, Inventory, InventoryTransaction, Item
+from app.db.models import (
+    PurchaseOrder, PurchaseOrderDetail, Inventory, InventoryTransaction, Item,
+    SupplierItem,
+)
 
 
 class ActionExecutor:
@@ -39,31 +42,74 @@ class ActionExecutor:
             return {"success": False, "message": f"Unsupported action_type: {action_type}"}
 
     async def _create_purchase_order(self, payload: Dict[str, Any], approved_by: str) -> Dict[str, Any]:
-        # Very simplified PO creation for Phase 1
+        """
+        Production-grade PO creation from agent proposals.
+        Looks up real supplier pricing via SupplierItem when possible.
+        """
+        import random
+        from datetime import datetime, timedelta
+
+        item_id = payload.get("ItemID")
+        qty = float(payload.get("Quantity", 0))
+        warehouse_id = payload.get("WarehouseID", 1)
+        supplier_id = payload.get("SupplierID", 1)
+
+        # Try to get preferred pricing / lead time
+        unit_price = payload.get("UnitPrice", 0.0)
+        lead_time = 7
+
+        if item_id:
+            stmt = select(SupplierItem).where(
+                (SupplierItem.ItemID == item_id) & (SupplierItem.SupplierID == supplier_id)
+            ).order_by(SupplierItem.IsPreferred.desc())
+            si = (await self.db.execute(stmt)).scalar_one_or_none()
+            if si:
+                unit_price = si.UnitPrice
+                lead_time = si.LeadTimeDays or 7
+
+        # Generate nice PO number
+        year = datetime.now().year
+        po_number = f"PO-AI-{year}-{random.randint(10000, 99999)}"
+
         po = PurchaseOrder(
-            PONumber=f"PO-AI-{approved_by[:3].upper()}{__import__('random').randint(1000,9999)}",
-            SupplierID=payload.get("SupplierID", 1),
-            WarehouseID=payload.get("WarehouseID", 1),
+            PONumber=po_number,
+            SupplierID=supplier_id,
+            WarehouseID=warehouse_id,
+            OrderDate=datetime.now().strftime("%Y-%m-%d"),
+            ExpectedDeliveryDate=(datetime.now() + timedelta(days=lead_time)).strftime("%Y-%m-%d"),
             Status="Draft",
-            CreatedBy=f"AI-Agent (approved by {approved_by})",
+            CreatedBy=f"AI Agent (approved by {approved_by})",
+            Notes="Created from approved agent recommendation",
         )
         self.db.add(po)
         await self.db.flush()
 
+        # Single line for now (MRP proposals are per-item)
         detail = PurchaseOrderDetail(
             PurchaseOrderID=po.PurchaseOrderID,
             LineNumber=1,
-            ItemID=payload.get("ItemID"),
-            Quantity=payload.get("Quantity", 0),
-            UnitPrice=payload.get("UnitPrice", 0.0),
+            ItemID=item_id,
+            Quantity=qty,
+            UnitPrice=unit_price or 0.0,
+            QuantityReceived=0.0,
         )
         self.db.add(detail)
+
+        subtotal = qty * (unit_price or 0.0)
+        po.Subtotal = subtotal
+        po.TotalAmount = subtotal  # taxes/shipping added later in UI
+
         await self.db.commit()
+        await self.db.refresh(po)
 
         return {
             "success": True,
             "purchase_order_id": po.PurchaseOrderID,
-            "message": f"Purchase Order {po.PONumber} created",
+            "po_number": po.PONumber,
+            "message": f"Purchase Order {po.PONumber} created from agent proposal",
+            "item_id": item_id,
+            "quantity": qty,
+            "unit_price": unit_price,
         }
 
     async def _adjust_inventory(self, payload: Dict[str, Any], approved_by: str) -> Dict[str, Any]:
