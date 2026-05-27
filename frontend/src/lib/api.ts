@@ -21,7 +21,7 @@ import * as mock from './mockData';
 // Configuration
 // ============================================
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
-const USE_MOCK = true; // Flip to false once real backend is live
+const USE_MOCK = false; // Set to true only if you want to run completely offline (no real LLM)
 
 const api = axios.create({
   baseURL: API_BASE,
@@ -354,6 +354,29 @@ export async function getSalesReps(): Promise<any[]> {
     return mock.getMockSalesReps();
   }
   const res = await api.get('/sales/reps'); // backend may expose later
+  return res.data;
+}
+
+// ============================================
+// AI SUPERVISOR (LLM-powered chat)
+// ============================================
+
+export async function chatWithSupervisor(messages: Array<{ role: string; text: string }>): Promise<{ response: string; suggested_agent?: string }> {
+  if (USE_MOCK) {
+    // Keep a lightweight simulation when mocks are on
+    await delay(450);
+    const last = messages[messages.length - 1]?.text?.toLowerCase() || '';
+
+    if (last.includes('yes') || last.includes('sure') || last.includes('run')) {
+      return { response: "Understood. Triggering the most relevant agent now...", suggested_agent: "production_scheduler" };
+    }
+    return {
+      response: "Thanks for the question. In a real setup I would use an LLM here. For now: the biggest current opportunity appears to be capacity at Assembly A and hinge shortages. Would you like me to run an agent?",
+      suggested_agent: "production_scheduler"
+    };
+  }
+
+  const res = await api.post('/agents/supervisor/chat', { messages });
   return res.data;
 }
 

@@ -26,6 +26,7 @@ from app.schemas.agent import (
 )
 from app.services.agent_service import get_agent_service
 from app.services.action_executor import get_executor
+from app.services.supervisor_service import chat_with_supervisor
 
 # Try to import approval workflow (may not exist yet)
 try:
@@ -167,3 +168,31 @@ async def reject_action_endpoint(
     action.ExecutionResult = f"Rejected: {body.reason}"
     await db.commit()
     return {"success": True, "message": "Proposal rejected. No changes made to operational data."}
+
+
+# =============================================================================
+# AI SUPERVISOR (LLM-powered natural language interface)
+# =============================================================================
+
+from pydantic import BaseModel
+
+class SupervisorChatRequest(BaseModel):
+    messages: List[Dict[str, str]]   # [{"role": "user" | "agent", "text": "..."}]
+
+
+class SupervisorChatResponse(BaseModel):
+    response: str
+    suggested_agent: Optional[str] = None
+
+
+@router.post("/supervisor/chat", response_model=SupervisorChatResponse)
+async def supervisor_chat(
+    payload: SupervisorChatRequest,
+    db: DBSessionDep,
+):
+    """
+    Conversational interface powered by LLM.
+    The supervisor can discuss the state of the business and suggest running agents.
+    """
+    result = await chat_with_supervisor(db, payload.messages)
+    return SupervisorChatResponse(**result)

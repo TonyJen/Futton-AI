@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getAgents, getRecommendations, runAgent, approveRecommendation, rejectRecommendation } from '@/lib/api';
+import { getAgents, getRecommendations, runAgent, approveRecommendation, rejectRecommendation, chatWithSupervisor } from '@/lib/api';
 import { Header } from '@/components/layout/Header';
 import { AgentCard } from '@/components/manufacturing/AgentCard';
 import { RecommendationCard } from '@/components/manufacturing/RecommendationCard';
@@ -18,7 +18,7 @@ export default function Agents() {
   const [runningAgent, setRunningAgent] = useState<number | null>(null);
   const [chatInput, setChatInput] = useState('');
   const [chatHistory, setChatHistory] = useState<Array<{ role: 'user' | 'agent'; text: string }>>([
-    { role: 'agent', text: 'Hello. I am the Funton AI Supervisor. Ask me anything about inventory, production, or demand. I will propose actions that require your approval.' }
+    { role: 'agent', text: 'Hello! I\'m the Funton AI Supervisor. I\'m powered by an LLM on the backend. Ask me about inventory, production, demand, or what the agents should focus on.' }
   ]);
   const [processingRec, setProcessingRec] = useState<number | null>(null);
 
@@ -63,35 +63,41 @@ export default function Agents() {
 
   const handleRunAgent = (id: number) => runAgentMutation.mutate(id);
 
-  // Simple simulated chat
-  const handleChat = (e: React.FormEvent) => {
+  // Real AI Supervisor powered by backend LLM (with full conversation context)
+  const handleChat = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!chatInput.trim()) return;
 
     const userMsg = chatInput.trim();
+
     setChatHistory(prev => [...prev, { role: 'user', text: userMsg }]);
     setChatInput('');
 
-    setTimeout(() => {
-      let response = 'I analyzed the data. ';
-      let newRecs = false;
+    try {
+      const historyForBackend = chatHistory.map(m => ({
+        role: m.role === 'agent' ? 'agent' : 'user',
+        text: m.text,
+      }));
+      historyForBackend.push({ role: 'user', text: userMsg });
 
-      if (userMsg.toLowerCase().includes('hinge') || userMsg.toLowerCase().includes('short')) {
-        response += 'We are critically low on hinges (CM-030). I already have a recommendation waiting for your approval.';
-      } else if (userMsg.toLowerCase().includes('oak') || userMsg.toLowerCase().includes('lumber')) {
-        response += 'MRP shows a net requirement of 87 units of Oak 4x4. Recommendation generated.';
-        newRecs = true;
-      } else {
-        response += 'Current bottleneck is capacity at Assembly A. Would you like me to run the Production Scheduler Agent?';
+      const result = await chatWithSupervisor(historyForBackend);
+
+      setChatHistory(prev => [...prev, { role: 'agent', text: result.response }]);
+
+      if (result.suggested_agent) {
+        setTimeout(() => {
+          setChatHistory(prev => [
+            ...prev,
+            { role: 'agent', text: `Would you like me to run the ${result.suggested_agent} agent?` }
+          ]);
+        }, 400);
       }
-
-      setChatHistory(prev => [...prev, { role: 'agent', text: response }]);
-
-      if (newRecs) {
-        // Trigger a simulated agent run
-        runAgentMutation.mutate(1);
-      }
-    }, 650);
+    } catch (err) {
+      setChatHistory(prev => [
+        ...prev,
+        { role: 'agent', text: "I couldn't connect to the AI Supervisor right now. Is the backend running?" }
+      ]);
+    }
   };
 
   return (
@@ -106,6 +112,7 @@ export default function Agents() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-primary-700">
             <Bot className="h-5 w-5" /> Ask the AI Supervisor
+            <Badge variant="neutral" className="text-[10px] ml-1">LLM</Badge>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -122,7 +129,7 @@ export default function Agents() {
             <Input 
               value={chatInput} 
               onChange={(e) => setChatInput(e.target.value)} 
-              placeholder="Ask about shortages, capacity, or what the agents recommend..." 
+              placeholder="What should we focus on? Any shortages? Capacity issues?" 
               className="flex-1" 
             />
             <Button type="submit"><Send className="h-4 w-4" /></Button>

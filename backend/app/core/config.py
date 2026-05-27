@@ -61,6 +61,11 @@ class Settings(BaseSettings):
     GROQ_API_KEY: str | None = None
     DEFAULT_LLM_PROVIDER: str = "openai"  # openai | anthropic | groq | ollama
 
+    # LLM Model names (you can override these)
+    OPENAI_MODEL: str = "gpt-4o-mini"
+    ANTHROPIC_MODEL: str = "claude-3-5-sonnet-20241022"   # Updated from deprecated 20240620
+    GROQ_MODEL: str = "llama-3.1-8b-instant"
+
     # Security (future)
     SECRET_KEY: str = "dev-secret-key-change-in-production"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days for dev
