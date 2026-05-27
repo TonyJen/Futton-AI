@@ -20,12 +20,12 @@ export function AgentCard({ agent, onRun, isRunning }: AgentCardProps) {
             <Play className="h-4 w-4" />
           </div>
           <div>
-            <div className="font-semibold text-lg tracking-tighter leading-none text-slate-900">{agent.name}</div>
+            <div className="font-semibold text-lg tracking-tighter leading-none text-slate-900 break-words">{agent.name}</div>
             <Badge variant="neutral" className="mt-1.5">{agent.category}</Badge>
           </div>
         </div>
 
-        <p className="text-sm text-slate-600 leading-snug">{agent.description}</p>
+        <p className="text-sm text-slate-600 leading-snug line-clamp-3 break-words">{agent.description}</p>
       </div>
 
       <div className="mt-5 pt-4 border-t flex items-center justify-between text-xs">

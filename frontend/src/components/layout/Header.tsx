@@ -15,8 +15,8 @@ export function Header({ title, subtitle, actions }: HeaderProps) {
   return (
     <div className="h-16 border-b border-slate-200 bg-white flex items-center justify-between px-8 flex-shrink-0">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tighter text-slate-900">{title}</h1>
-        {subtitle && <p className="text-sm text-slate-500 -mt-0.5">{subtitle}</p>}
+        <h1 className="text-2xl font-semibold tracking-tighter text-slate-900 break-words">{title}</h1>
+        {subtitle && <p className="text-sm text-slate-500 -mt-0.5 break-words">{subtitle}</p>}
       </div>
 
       <div className="flex items-center gap-5">

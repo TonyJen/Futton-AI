@@ -17,7 +17,7 @@ import {
 import { 
   Package, DollarSign, Factory, AlertTriangle, TrendingUp, Users, Bot 
 } from 'lucide-react';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, formatCompactCurrency } from '@/lib/utils';
 import { toast } from 'sonner';
 
 export default function Dashboard() {
@@ -91,7 +91,7 @@ export default function Dashboard() {
       />
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-x-4 gap-y-12 mt-6 mb-12">
         <KpiCard 
           label="Total SKUs" 
           value={kpis?.totalSkus ?? 87} 
@@ -101,7 +101,7 @@ export default function Dashboard() {
         />
         <KpiCard 
           label="Inventory Value" 
-          value={kpis ? formatCurrency(kpis.totalInventoryValue) : '$1.25M'} 
+          value={kpis ? formatCompactCurrency(kpis.totalInventoryValue) : '$1.25M'} 
           change="−1.8% MoM" 
           icon={<DollarSign className="h-5 w-5" />} 
         />
@@ -145,14 +145,14 @@ export default function Dashboard() {
       </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 xl:grid-cols-5 gap-5 mb-8">
+      <div className="grid grid-cols-1 xl:grid-cols-5 gap-6 mb-12">
         {/* Production Trend */}
         <Card className="xl:col-span-3">
           <CardHeader>
             <CardTitle>Production Throughput — Last 7 Days</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-72 -mx-1">
+            <div className="h-72 -mx-2">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={productionTrend}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
@@ -173,7 +173,7 @@ export default function Dashboard() {
             <CardTitle>Inventory Value by Category</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-72 flex items-center justify-center -mx-4">
+            <div className="h-72 flex items-center justify-center -mx-2">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -194,7 +194,7 @@ export default function Dashboard() {
                 </PieChart>
               </ResponsiveContainer>
             </div>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs mt-1 pl-2">
+            <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs mt-2 pl-1">
               {inventoryDist.map((entry, idx) => (
                 <div key={idx} className="flex items-center gap-2">
                   <div className="w-2.5 h-2.5 rounded-full" style={{ background: entry.fill }} />
@@ -208,7 +208,7 @@ export default function Dashboard() {
       </div>
 
       {/* Work Center Utilization + AI Recommendations */}
-      <div className="grid grid-cols-1 xl:grid-cols-5 gap-5">
+      <div className="grid grid-cols-1 xl:grid-cols-5 gap-6 mb-8">
         {/* Utilization bars */}
         <Card className="xl:col-span-2">
           <CardHeader>
@@ -234,10 +234,10 @@ export default function Dashboard() {
 
         {/* AI Recommended Actions - THE STAR */}
         <Card className="xl:col-span-3 ai-section border-primary-200">
-          <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center justify-between mb-4">
             <div>
               <div className="flex items-center gap-3">
-                <Bot className="h-6 w-6 text-primary-600" />
+                <Bot className="h-5 w-5 text-primary-600" />
                 <h3 className="font-semibold text-xl tracking-tighter text-slate-900">AI Recommended Actions</h3>
               </div>
               <p className="text-sm text-primary-700 mt-1">

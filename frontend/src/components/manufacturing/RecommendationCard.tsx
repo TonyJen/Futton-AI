@@ -23,7 +23,7 @@ export function RecommendationCard({ rec, onApprove, onReject, isProcessing }: R
             <Badge variant="info">{rec.agentName.split(' ')[0]}</Badge>
             <span className="text-xs text-slate-500">{formatDateTime(rec.createdAt)}</span>
           </div>
-          <h4 className="font-semibold text-base text-slate-900 mt-1.5 tracking-tight leading-tight">{rec.title}</h4>
+          <h4 className="font-semibold text-base text-slate-900 mt-1.5 tracking-tight leading-tight line-clamp-2 break-words">{rec.title}</h4>
         </div>
         <div className="text-right flex-shrink-0">
           <div className="text-xs text-emerald-700 font-semibold flex items-center justify-end gap-1">
@@ -32,7 +32,9 @@ export function RecommendationCard({ rec, onApprove, onReject, isProcessing }: R
         </div>
       </div>
 
-      <p className="text-sm text-slate-600 leading-snug mt-1">{rec.description}</p>
+      <p className="text-sm text-slate-600 leading-snug mt-1 line-clamp-3 break-words">
+        {rec.description}
+      </p>
 
       <div className="flex items-center justify-between pt-3 border-t mt-auto">
         <div>

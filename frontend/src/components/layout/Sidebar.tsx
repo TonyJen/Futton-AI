@@ -65,7 +65,7 @@ export function Sidebar() {
           </div>
           <div className="min-w-0">
             <div className="text-sm font-semibold text-slate-800 truncate">Elena Rodriguez</div>
-            <div className="text-xs text-slate-500">Plant Operations Director</div>
+            <div className="text-xs text-slate-500 truncate">Plant Operations Director</div>
           </div>
         </div>
       </div>

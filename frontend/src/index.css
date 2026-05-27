@@ -45,11 +45,11 @@ body {
 
 /* KPI Cards */
 .kpi-card {
-  @apply bg-white rounded-2xl border border-slate-200 p-6 shadow-card transition-all hover:shadow-card-hover;
+  @apply bg-white rounded-2xl border border-slate-200 p-5 shadow-card transition-all hover:shadow-card-hover;
 }
 
 .kpi-value {
-  @apply text-3xl font-semibold tracking-tighter text-slate-900 tabular-nums;
+  @apply text-2xl xl:text-xl font-semibold tracking-tighter text-slate-900 tabular-nums leading-none;
 }
 
 .kpi-label {
@@ -124,11 +124,11 @@ body {
 
 /* Agent cards and recommendations */
 .agent-card {
-  @apply card p-6 flex flex-col h-full transition-all hover:-translate-y-0.5;
+  @apply card p-6 flex flex-col h-full transition-all hover:-translate-y-0.5 overflow-hidden;
 }
 
 .recommendation-card {
-  @apply border border-slate-200 bg-white rounded-xl p-5 flex flex-col gap-3;
+  @apply border border-slate-200 bg-white rounded-xl p-5 flex flex-col gap-3 overflow-hidden;
 }
 
 /* Charts container */
