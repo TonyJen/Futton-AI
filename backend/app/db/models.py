@@ -98,6 +98,64 @@ class SalesChannel(Base):
     IsActive: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     sales_orders: Mapped[List["SalesOrder"]] = relationship(back_populates="sales_channel")
+    stores: Mapped[List["Store"]] = relationship(back_populates="sales_channel")
+
+
+class Store(Base):
+    __tablename__ = "Store"
+
+    StoreID: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    StoreCode: Mapped[str] = mapped_column(String(20), unique=True, nullable=False)
+    StoreName: Mapped[str] = mapped_column(String(100), nullable=False)
+    SalesChannelID: Mapped[int] = mapped_column(ForeignKey("SalesChannel.SalesChannelID"), nullable=False)
+    Manager: Mapped[Optional[str]] = mapped_column(String(100))
+    Phone: Mapped[Optional[str]] = mapped_column(String(20))
+    Email: Mapped[Optional[str]] = mapped_column(String(100))
+    Address: Mapped[Optional[str]] = mapped_column(Text)
+    City: Mapped[Optional[str]] = mapped_column(String(100))
+    State: Mapped[Optional[str]] = mapped_column(String(50))
+    ZipCode: Mapped[Optional[str]] = mapped_column(String(20))
+    OpenDate: Mapped[Optional[str]] = mapped_column(String(10))
+    IsActive: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    sales_channel: Mapped["SalesChannel"] = relationship(back_populates="stores")
+    sales_orders: Mapped[List["SalesOrder"]] = relationship(back_populates="store")
+
+
+# =============================================================================
+# SALES REPS & TERRITORIES (Phase 2 CRM)
+# =============================================================================
+
+class SalesTerritory(Base):
+    __tablename__ = "SalesTerritory"
+
+    TerritoryID: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    TerritoryCode: Mapped[str] = mapped_column(String(20), unique=True, nullable=False)
+    TerritoryName: Mapped[str] = mapped_column(String(100), nullable=False)
+    Region: Mapped[Optional[str]] = mapped_column(String(50))
+    IsActive: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    sales_reps: Mapped[List["SalesRep"]] = relationship(back_populates="territory")
+    customers: Mapped[List["Customer"]] = relationship(back_populates="territory")
+
+
+class SalesRep(Base):
+    __tablename__ = "SalesRep"
+
+    SalesRepID: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    EmployeeCode: Mapped[str] = mapped_column(String(20), unique=True, nullable=False)
+    FirstName: Mapped[str] = mapped_column(String(50), nullable=False)
+    LastName: Mapped[str] = mapped_column(String(50), nullable=False)
+    Email: Mapped[Optional[str]] = mapped_column(String(100))
+    Phone: Mapped[Optional[str]] = mapped_column(String(20))
+    TerritoryID: Mapped[Optional[int]] = mapped_column(ForeignKey("SalesTerritory.TerritoryID"))
+    HireDate: Mapped[Optional[str]] = mapped_column(String(10))
+    IsActive: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    territory: Mapped[Optional["SalesTerritory"]] = relationship(back_populates="sales_reps")
+    customers: Mapped[List["Customer"]] = relationship(back_populates="sales_rep")
+    sales_orders: Mapped[List["SalesOrder"]] = relationship(back_populates="sales_rep")
+    quotes: Mapped[List["SalesQuote"]] = relationship(back_populates="sales_rep")
 
 
 # =============================================================================
@@ -355,9 +413,15 @@ class Customer(Base, TimestampMixin):
     Country: Mapped[Optional[str]] = mapped_column(String(50))
     CreditLimit: Mapped[Optional[float]] = mapped_column(Float)
     CustomerType: Mapped[str] = mapped_column(String(20), default="Retail")
+    SalesRepID: Mapped[Optional[int]] = mapped_column(ForeignKey("SalesRep.SalesRepID"))
+    TerritoryID: Mapped[Optional[int]] = mapped_column(ForeignKey("SalesTerritory.TerritoryID"))
     IsActive: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     sales_orders: Mapped[List["SalesOrder"]] = relationship(back_populates="customer")
+    sales_rep: Mapped[Optional["SalesRep"]] = relationship(back_populates="customers")
+    territory: Mapped[Optional["SalesTerritory"]] = relationship(back_populates="customers")
+    quotes: Mapped[List["SalesQuote"]] = relationship(back_populates="customer")
+    returns: Mapped[List["SalesReturn"]] = relationship(back_populates="customer")
 
 
 class SalesOrder(Base, TimestampMixin):
@@ -370,6 +434,8 @@ class SalesOrder(Base, TimestampMixin):
     SalesChannelID: Mapped[Optional[int]] = mapped_column(
         ForeignKey("SalesChannel.SalesChannelID")
     )
+    StoreID: Mapped[Optional[int]] = mapped_column(ForeignKey("Store.StoreID"))
+    SalesRepID: Mapped[Optional[int]] = mapped_column(ForeignKey("SalesRep.SalesRepID"))
 
     OrderDate: Mapped[str] = mapped_column(String(10), nullable=False, server_default=func.current_date())
     RequestedDeliveryDate: Mapped[Optional[str]] = mapped_column(String(10))
@@ -392,6 +458,9 @@ class SalesOrder(Base, TimestampMixin):
     customer: Mapped["Customer"] = relationship(back_populates="sales_orders")
     warehouse: Mapped["Warehouse"] = relationship(back_populates="sales_orders")
     sales_channel: Mapped[Optional["SalesChannel"]] = relationship(back_populates="sales_orders")
+    sales_rep: Mapped[Optional["SalesRep"]] = relationship(back_populates="sales_orders")
+    store: Mapped[Optional["Store"]] = relationship(back_populates="sales_orders")
+    quotes: Mapped[List["SalesQuote"]] = relationship(back_populates="converted_order")
 
     details: Mapped[List["SalesOrderDetail"]] = relationship(
         back_populates="sales_order", cascade="all, delete-orphan"
@@ -424,6 +493,103 @@ class SalesOrderDetail(Base):
     @property
     def net_amount(self) -> float:
         return self.line_total * (1 - self.DiscountPercent / 100)
+
+
+# =============================================================================
+# PHASE 2 SALES & CRM MODELS
+# =============================================================================
+
+class SalesQuote(Base, TimestampMixin):
+    __tablename__ = "SalesQuote"
+
+    QuoteID: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    QuoteNumber: Mapped[str] = mapped_column(String(50), unique=True, nullable=False, index=True)
+    CustomerID: Mapped[int] = mapped_column(ForeignKey("Customer.CustomerID"), nullable=False)
+    SalesChannelID: Mapped[Optional[int]] = mapped_column(ForeignKey("SalesChannel.SalesChannelID"))
+    SalesRepID: Mapped[Optional[int]] = mapped_column(ForeignKey("SalesRep.SalesRepID"))
+
+    QuoteDate: Mapped[str] = mapped_column(String(10), nullable=False, server_default=func.current_date())
+    ExpirationDate: Mapped[Optional[str]] = mapped_column(String(10))
+    Status: Mapped[str] = mapped_column(String(20), default="Draft", nullable=False)  # Draft, Sent, Accepted, Declined, Expired
+
+    Subtotal: Mapped[float] = mapped_column(Float, default=0.0)
+    DiscountAmount: Mapped[float] = mapped_column(Float, default=0.0)
+    TaxAmount: Mapped[float] = mapped_column(Float, default=0.0)
+    TotalAmount: Mapped[float] = mapped_column(Float, default=0.0)
+
+    ConvertedToOrderID: Mapped[Optional[int]] = mapped_column(ForeignKey("SalesOrder.SalesOrderID"))
+    Notes: Mapped[Optional[str]] = mapped_column(Text)
+    CreatedBy: Mapped[Optional[str]] = mapped_column(String(100))
+
+    customer: Mapped["Customer"] = relationship(back_populates="quotes")
+    sales_channel: Mapped[Optional["SalesChannel"]] = relationship()
+    sales_rep: Mapped[Optional["SalesRep"]] = relationship(back_populates="quotes")
+    converted_order: Mapped[Optional["SalesOrder"]] = relationship()
+
+    details: Mapped[List["SalesQuoteDetail"]] = relationship(
+        back_populates="quote", cascade="all, delete-orphan"
+    )
+
+
+class SalesQuoteDetail(Base):
+    __tablename__ = "SalesQuoteDetail"
+
+    QuoteDetailID: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    QuoteID: Mapped[int] = mapped_column(ForeignKey("SalesQuote.QuoteID"), nullable=False)
+    LineNumber: Mapped[int] = mapped_column(Integer, nullable=False)
+    ItemID: Mapped[int] = mapped_column(ForeignKey("Items.ItemID"), nullable=False)
+
+    Quantity: Mapped[float] = mapped_column(Float, nullable=False)
+    UnitPrice: Mapped[float] = mapped_column(Float, nullable=False)
+    DiscountPercent: Mapped[float] = mapped_column(Float, default=0.0)
+
+    quote: Mapped["SalesQuote"] = relationship(back_populates="details")
+    item: Mapped["Item"] = relationship()
+
+
+class SalesReturn(Base, TimestampMixin):
+    __tablename__ = "SalesReturn"
+
+    ReturnID: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    ReturnNumber: Mapped[str] = mapped_column(String(50), unique=True, nullable=False, index=True)
+    SalesOrderID: Mapped[int] = mapped_column(ForeignKey("SalesOrder.SalesOrderID"), nullable=False)
+    CustomerID: Mapped[int] = mapped_column(ForeignKey("Customer.CustomerID"), nullable=False)
+    ReturnReasonID: Mapped[int] = mapped_column(ForeignKey("ReturnReason.ReturnReasonID"), nullable=False)
+
+    ReturnDate: Mapped[str] = mapped_column(String(10), nullable=False, server_default=func.current_date())
+    Status: Mapped[str] = mapped_column(String(20), default="Pending", nullable=False)  # Pending, Approved, Received, Refunded, Denied
+
+    RefundAmount: Mapped[float] = mapped_column(Float, default=0.0)
+    RestockingFee: Mapped[float] = mapped_column(Float, default=0.0)
+    Notes: Mapped[Optional[str]] = mapped_column(Text)
+    ApprovedBy: Mapped[Optional[str]] = mapped_column(String(100))
+    ApprovedDate: Mapped[Optional[str]] = mapped_column(String(30))
+
+    sales_order: Mapped["SalesOrder"] = relationship()
+    customer: Mapped["Customer"] = relationship(back_populates="returns")
+    return_reason: Mapped["ReturnReason"] = relationship()
+
+    details: Mapped[List["SalesReturnDetail"]] = relationship(
+        back_populates="sales_return", cascade="all, delete-orphan"
+    )
+
+
+class SalesReturnDetail(Base):
+    __tablename__ = "SalesReturnDetail"
+
+    ReturnDetailID: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    ReturnID: Mapped[int] = mapped_column(ForeignKey("SalesReturn.ReturnID"), nullable=False)
+    SODetailID: Mapped[int] = mapped_column(ForeignKey("SalesOrderDetail.SODetailID"), nullable=False)
+    ItemID: Mapped[int] = mapped_column(ForeignKey("Items.ItemID"), nullable=False)
+
+    QuantityReturned: Mapped[float] = mapped_column(Float, nullable=False)
+    UnitPrice: Mapped[float] = mapped_column(Float, nullable=False)
+    RefundAmount: Mapped[float] = mapped_column(Float, nullable=False)
+    Disposition: Mapped[Optional[str]] = mapped_column(String(50))  # Restock, Scrap, Repair, RMA
+
+    sales_return: Mapped["SalesReturn"] = relationship(back_populates="details")
+    sales_order_detail: Mapped["SalesOrderDetail"] = relationship()
+    item: Mapped["Item"] = relationship()
 
 
 # =============================================================================

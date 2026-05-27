@@ -1,14 +1,18 @@
 """
-Sales Orders and Customers Router (Phase 1 basic CRUD).
+Sales Router - Phase 2 (Quotes, Returns, CRM)
+
+Extends the basic Phase 1 Sales Orders & Customers with full quote lifecycle,
+returns, and sales rep/territory support.
 """
 
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from app.core.deps import get_db
-from app.db.models import Customer, SalesOrder
+from app.db.models import Customer, SalesOrder, SalesQuote, SalesReturn
 from app.schemas.common import MessageResponse
 from app.schemas.sales import (
     CustomerCreate,
@@ -17,7 +21,13 @@ from app.schemas.sales import (
     SalesOrderDetailReadFull,
     SalesOrderRead,
     SalesOrderUpdate,
+    SalesQuoteCreate,
+    SalesQuoteDetailReadFull,
+    SalesQuoteRead,
+    SalesReturnCreate,
+    SalesReturnRead,
 )
+from app.services.sales_service import create_quote, convert_quote_to_order, create_return
 
 router = APIRouter(prefix="/sales", tags=["Sales"])
 
@@ -106,3 +116,71 @@ async def update_sales_order(order_id: int, payload: SalesOrderUpdate, db=Depend
     await db.flush()
     await db.refresh(so)
     return SalesOrderRead.model_validate(so)
+
+
+# =============================================================================
+# QUOTES (Phase 2)
+# =============================================================================
+
+@router.post("/quotes", response_model=SalesQuoteRead, status_code=status.HTTP_201_CREATED)
+async def create_sales_quote(payload: SalesQuoteCreate, db=Depends(get_db)):
+    try:
+        quote = await create_quote(db, payload.model_dump())
+        return SalesQuoteRead.model_validate(quote)
+    except Exception as e:
+        raise HTTPException(400, str(e))
+
+
+@router.get("/quotes", response_model=List[SalesQuoteRead])
+async def list_sales_quotes(db=Depends(get_db)):
+    result = await db.execute(select(SalesQuote).order_by(SalesQuote.QuoteID.desc()))
+    return [SalesQuoteRead.model_validate(q) for q in result.scalars().all()]
+
+
+@router.get("/quotes/{quote_id}", response_model=SalesQuoteDetailReadFull)
+async def get_sales_quote(quote_id: int, db=Depends(get_db)):
+    stmt = (
+        select(SalesQuote)
+        .where(SalesQuote.QuoteID == quote_id)
+        .options(
+            selectinload(SalesQuote.details).selectinload("item"),
+            selectinload(SalesQuote.customer),
+        )
+    )
+    result = await db.execute(stmt)
+    quote = result.scalar_one_or_none()
+    if not quote:
+        raise HTTPException(404, "Quote not found")
+
+    dto = SalesQuoteDetailReadFull.model_validate(quote)
+    if quote.customer:
+        dto.CustomerName = quote.customer.CustomerName
+    return dto
+
+
+@router.post("/quotes/{quote_id}/convert", response_model=SalesOrderRead, status_code=status.HTTP_201_CREATED)
+async def convert_quote(quote_id: int, db=Depends(get_db)):
+    try:
+        order = await convert_quote_to_order(db, quote_id)
+        return SalesOrderRead.model_validate(order)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+# =============================================================================
+# RETURNS (Phase 2)
+# =============================================================================
+
+@router.post("/returns", response_model=SalesReturnRead, status_code=status.HTTP_201_CREATED)
+async def create_sales_return(payload: SalesReturnCreate, db=Depends(get_db)):
+    try:
+        ret = await create_return(db, payload.model_dump())
+        return SalesReturnRead.model_validate(ret)
+    except Exception as e:
+        raise HTTPException(400, str(e))
+
+
+@router.get("/returns", response_model=List[SalesReturnRead])
+async def list_returns(db=Depends(get_db)):
+    result = await db.execute(select(SalesReturn).order_by(SalesReturn.ReturnID.desc()))
+    return [SalesReturnRead.model_validate(r) for r in result.scalars().all()]
