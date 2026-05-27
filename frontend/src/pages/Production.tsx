@@ -35,7 +35,7 @@ export default function Production() {
       <Header title="Production Command Center" subtitle="Work orders, capacity, and material readiness" />
 
       {/* Work Centers */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mt-8 mb-8">
         {workCenters.map((wc: WorkCenter) => (
           <Card key={wc.workCenterId} className="hover:shadow-card-hover transition">
             <CardHeader className="pb-2">

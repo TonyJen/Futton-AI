@@ -54,7 +54,7 @@ export default function Reports() {
         }
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8 mb-8">
         {/* Manufacturing */}
         <Card>
           <CardHeader>

@@ -121,7 +121,7 @@ export default function Returns() {
       />
 
       {/* Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8 mb-8">
         <Card><CardContent className="pt-6"><div className="text-sm text-slate-500">Open Returns</div><div className="text-4xl font-semibold tracking-tighter mt-1">{pendingReturns.length}</div></CardContent></Card>
         <Card><CardContent className="pt-6"><div className="text-sm text-slate-500">Total Refunds (all time)</div><div className="text-4xl font-semibold tracking-tighter mt-1 text-rose-600">{formatCurrency(totalRefund)}</div></CardContent></Card>
         <Card><CardContent className="pt-6"><div className="text-sm text-slate-500">Restock-eligible</div><div className="text-4xl font-semibold tracking-tighter mt-1">{returns.filter((r: any) => r.status !== 'Denied').length}</div></CardContent></Card>

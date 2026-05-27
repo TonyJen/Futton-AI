@@ -43,7 +43,7 @@ export default function Inventory() {
         tabs={WAREHOUSES.map(w => ({ id: w, label: w }))} 
         activeTab={activeWarehouse} 
         onChange={setActiveWarehouse} 
-        className="mb-6" 
+        className="mt-8 mb-6" 
       />
 
       {/* Alerts */}

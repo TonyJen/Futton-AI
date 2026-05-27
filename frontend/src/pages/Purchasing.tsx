@@ -142,7 +142,7 @@ export default function Purchasing() {
       />
 
       {/* KPIs */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8 mb-8">
         <Card><CardContent className="pt-6"><div className="text-sm text-slate-500">Open POs</div><div className="text-4xl font-semibold tracking-tighter mt-1">{openPOs.length}</div></CardContent></Card>
         <Card><CardContent className="pt-6"><div className="text-sm text-slate-500">Open PO Value</div><div className="text-4xl font-semibold tracking-tighter mt-1 text-emerald-600">{formatCurrency(totalOpenValue)}</div></CardContent></Card>
         <Card><CardContent className="pt-6"><div className="text-sm text-slate-500">Awaiting Delivery</div><div className="text-4xl font-semibold tracking-tighter mt-1">{openPOs.filter((p: any) => p.status === 'Sent' || p.status === 'Partial').length}</div></CardContent></Card>

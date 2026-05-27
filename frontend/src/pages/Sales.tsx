@@ -48,11 +48,33 @@ export default function Sales() {
       />
 
       {/* KPI Row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <Card><CardContent className="pt-6"><div className="text-xs text-slate-500">MTD Revenue</div><div className="text-4xl font-semibold tracking-tighter mt-1">{formatCurrency(summary?.totalRevenueMTD ?? 847650)}</div></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="text-xs text-slate-500">Orders MTD</div><div className="text-4xl font-semibold tracking-tighter mt-1">{summary?.ordersMTD ?? 184}</div></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="text-xs text-slate-500">Open Quotes</div><div className="text-4xl font-semibold tracking-tighter mt-1 text-amber-600">{openQuotes.length}</div></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="text-xs text-slate-500">Avg Order Value</div><div className="text-4xl font-semibold tracking-tighter mt-1">{formatCurrency(summary?.avgOrderValue ?? 4607)}</div></CardContent></Card>
+      <div className="mt-8 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-6">
+          <Card>
+            <CardContent className="p-5">
+              <div className="text-xs text-slate-500">MTD Revenue</div>
+              <div className="text-4xl font-semibold tracking-tighter mt-2">{formatCurrency(summary?.totalRevenueMTD ?? 847650)}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-5">
+              <div className="text-xs text-slate-500">Orders MTD</div>
+              <div className="text-4xl font-semibold tracking-tighter mt-2">{summary?.ordersMTD ?? 184}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-5">
+              <div className="text-xs text-slate-500">Open Quotes</div>
+              <div className="text-4xl font-semibold tracking-tighter mt-2 text-amber-600">{openQuotes.length}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-5">
+              <div className="text-xs text-slate-500">Avg Order Value</div>
+              <div className="text-4xl font-semibold tracking-tighter mt-2">{formatCurrency(summary?.avgOrderValue ?? 4607)}</div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* Tabs: Orders + Quotes (using existing Tabs primitive) */}

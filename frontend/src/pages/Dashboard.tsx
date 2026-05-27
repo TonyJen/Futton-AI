@@ -91,7 +91,7 @@ export default function Dashboard() {
       />
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 2xl:grid-cols-8 gap-x-4 gap-y-8 mt-6 mb-12">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 2xl:grid-cols-8 gap-x-4 gap-y-8 mt-8 mb-12">
         <KpiCard 
           label="Total SKUs" 
           value={kpis?.totalSkus ?? 87} 

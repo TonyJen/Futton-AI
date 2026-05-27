@@ -63,11 +63,13 @@ export default function Quotes() {
         i.itemName?.toLowerCase().includes(q) || i.itemCode?.toLowerCase().includes(q)
       );
     }
-    // Put finished goods first
+    // Put finished goods first (defensive against missing data from failed API calls)
     return [...list].sort((a: any, b: any) => {
       const aFG = a.itemType === 'Finished Good' ? 0 : 1;
       const bFG = b.itemType === 'Finished Good' ? 0 : 1;
-      return aFG - bFG || a.itemName.localeCompare(b.itemName);
+      const aName = a.itemName || '';
+      const bName = b.itemName || '';
+      return aFG - bFG || aName.localeCompare(bName);
     });
   }, [items, cqItemSearch]);
 
@@ -209,7 +211,7 @@ export default function Quotes() {
       />
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8 mb-8">
         <Card>
           <CardContent className="pt-6">
             <div className="text-sm text-slate-500">Open Quotes</div>

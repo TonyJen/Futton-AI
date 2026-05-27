@@ -152,7 +152,7 @@ export default function Agents() {
       />
 
       {/* Chat / Supervisor */}
-      <Card className="mb-8 border-primary-100 bg-gradient-to-r from-white to-primary-50/30">
+      <Card className="mt-8 mb-8 border-primary-100 bg-gradient-to-r from-white to-primary-50/30">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-primary-700">
             <Bot className="h-5 w-5" /> Ask the AI Supervisor

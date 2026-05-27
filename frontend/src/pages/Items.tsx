@@ -41,7 +41,7 @@ export default function Items() {
         subtitle="Master data with multi-level BOM explorer"
       />
 
-      <div className="flex items-center gap-3 mb-6">
+      <div className="flex items-center gap-3 mt-8 mb-6">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
           <Input 
