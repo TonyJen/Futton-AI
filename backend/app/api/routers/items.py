@@ -11,34 +11,38 @@ from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Query
 
 from app.core.dependencies import DBSessionDep
-from app.schemas.item import (
-    BOMExplosionResponse,
-    Item,
-    ItemFilter,
-)
+from app.schemas.item import ItemRead
+from app.schemas.bom import BOMExplosionResult
 from app.services.bom_service import get_full_bom_explosion
 
 from app.db.models import Item as ItemModel
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 router = APIRouter(prefix="/items", tags=["Items & BOM"])
 
 
-@router.get("", response_model=List[Item])
+@router.get("", response_model=List[dict])
 async def list_items(
     db: DBSessionDep,
-    item_type: Optional[str] = Query(None, description="Filter by type code: RAW | COMP | FG"),
+    item_type: Optional[str] = Query(None, alias="type", description="Filter by type: Raw Material | Component | Finished Good | Packaging"),
     is_active: bool = Query(True),
-    search: Optional[str] = Query(None, min_length=1, description="Search ItemCode or ItemName"),
+    search: Optional[str] = Query(None, description="Search ItemCode or ItemName"),
     limit: int = Query(100, le=500),
-) -> List[Item]:
-    """List items with basic filters. Strong typing via Pydantic."""
-    stmt = select(ItemModel).order_by(ItemModel.ItemCode)
+) -> List[dict]:
+    """List items shaped for the frontend (camelCase + resolved type name)."""
+    from app.db.models import ItemType as ItemTypeModel
 
-    if item_type:
-        from app.db.models import ItemType
+    stmt = (
+        select(ItemModel)
+        .outerjoin(ItemModel.item_type)
+        .options(selectinload(ItemModel.item_type))
+        .order_by(ItemModel.ItemCode)
+    )
 
-        stmt = stmt.join(ItemModel.item_type).where(ItemType.TypeCode == item_type)
+    if item_type and item_type != "All":
+        stmt = stmt.where(ItemTypeModel.TypeCode == item_type)
+
     if is_active is not None:
         stmt = stmt.where(ItemModel.IsActive == is_active)
     if search:
@@ -48,16 +52,34 @@ async def list_items(
 
     stmt = stmt.limit(limit)
     result = await db.execute(stmt)
-    items = result.scalars().all()
-    return [Item.model_validate(item) for item in items]
+    rows = result.scalars().all()
+
+    shaped = []
+    for item in rows:
+        itype = item.item_type
+        shaped.append({
+            "itemId": item.ItemID,
+            "itemCode": item.ItemCode,
+            "itemName": item.ItemName,
+            "itemType": (itype.TypeCode if itype else "Unknown"),
+            "unit": "",  # can be enriched later if Unit relationship is loaded
+            "description": item.Description,
+            "standardCost": float(item.StandardCost or 0),
+            "listPrice": float(item.ListPrice or 0),
+            "isActive": item.IsActive,
+            "leadTimeDays": item.LeadTimeDays or 0,
+            "reorderPoint": float(item.ReorderPoint or 0),
+            "safetyStock": float(item.SafetyStock or 0),
+        })
+    return shaped
 
 
-@router.get("/{item_id}/bom", response_model=BOMExplosionResponse)
+@router.get("/{item_id}/bom", response_model=BOMExplosionResult)
 async def get_item_bom(
     item_id: int,
     db: DBSessionDep,
     include_inactive: bool = Query(False),
-) -> BOMExplosionResponse:
+) -> BOMExplosionResult:
     """Full recursive BOM explosion for a finished good or component."""
     try:
         explosion = await get_full_bom_explosion(db, item_id, include_inactive=include_inactive)

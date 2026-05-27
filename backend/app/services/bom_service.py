@@ -145,3 +145,25 @@ class BOMService:
             "flat_components": [c.model_dump() for c in explosion.Components],
             "note": "Use explode_bom for the primary flat structure. Tree view coming in Phase 2.",
         }
+
+
+# =============================================================================
+# Convenience wrapper (used by items router + legacy callers)
+# =============================================================================
+
+async def get_full_bom_explosion(
+    db: AsyncSession,
+    item_id: int,
+    include_inactive: bool = False,
+) -> "BOMExplosionResult":
+    """
+    Top-level function expected by the /api/v1/items/{item_id}/bom router.
+    Delegates to the full-featured BOMService implementation.
+    """
+    from app.schemas.bom import BOMExplosionResult  # avoid circular import at module load
+
+    service = BOMService(db)
+    # Note: current implementation always excludes inactive components.
+    # include_inactive flag is accepted for future extension.
+    result = await service.explode_bom(parent_item_id=item_id, parent_quantity=1.0)
+    return result

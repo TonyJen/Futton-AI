@@ -26,12 +26,31 @@ class ProductionService:
         self.bom_service = BOMService(db)
 
     async def list_orders(self, status: Optional[str] = None) -> List[ProductionOrderRead]:
-        stmt = select(ProductionOrder).order_by(ProductionOrder.ProductionOrderID.desc())
+        stmt = (
+            select(ProductionOrder)
+            .options(
+                selectinload(ProductionOrder.item),
+                selectinload(ProductionOrder.work_center),
+            )
+            .order_by(ProductionOrder.ProductionOrderID.desc())
+        )
         if status:
             stmt = stmt.where(ProductionOrder.Status == status)
 
         result = await self.db.execute(stmt)
-        return [ProductionOrderRead.model_validate(o) for o in result.scalars().all()]
+        orders = []
+        for o in result.scalars().all():
+            dto = ProductionOrderRead.model_validate(o)
+            # Enrich with names for the UI (list view)
+            if o.item:
+                # Pydantic models are immutable by default in v2; we work around by reconstructing or using __dict__
+                # Easiest pragmatic approach: attach extra attributes the router can read
+                dto.ItemCode = o.item.ItemCode
+                dto.ItemName = o.item.ItemName
+            if o.work_center:
+                dto.WorkCenterName = o.work_center.WorkCenterName
+            orders.append(dto)
+        return orders
 
     async def get_order_detail(self, order_id: int) -> Optional[ProductionOrderDetailRead]:
         stmt = (

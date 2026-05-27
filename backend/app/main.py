@@ -110,10 +110,25 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
-# CORS - critical for frontend dev
+# CORS - critical for frontend dev (very defensive in DEBUG mode)
+cors_origins = list(settings.CORS_ORIGINS or [])
+
+if settings.DEBUG:
+    # Always ensure common Vite / CRA dev origins are allowed during development
+    dev_origins = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:5174",   # sometimes Vite uses next port
+    ]
+    cors_origins = list(set(cors_origins + dev_origins))
+
+logger.info(f"CORS allowed origins: {cors_origins}")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

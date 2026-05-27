@@ -63,7 +63,24 @@ export async function getItemBOM(itemId: number): Promise<any> {
     return mock.getBOMForItem(itemId);
   }
   const res = await api.get(`/items/${itemId}/bom`);
-  return res.data;
+  const data = res.data;
+
+  // Normalize backend rich BOMExplosionResult into the camelCase BOMComponent[] the UI components expect
+  if (data && Array.isArray(data.Components)) {
+    return data.Components.map((c: any) => ({
+      bomId: 0,
+      parentItemId: c.ParentItemID ?? c.parent_item_id ?? 0,
+      componentItemId: c.ComponentItemID ?? c.component_item_id,
+      componentItemCode: c.ComponentItemCode ?? c.component_item_code,
+      componentItemName: c.ComponentItemName ?? c.component_item_name,
+      quantity: c.TotalQuantityRequired ?? c.total_quantity_required ?? c.QuantityPerParent ?? c.quantity ?? 1,
+      unit: c.UnitCode ?? c.unit_code ?? '',
+      scrapRate: c.ScrapRate ?? c.scrap_rate ?? 0,
+      level: c.Level ?? c.level ?? 0,
+    }));
+  }
+  // Fallback: if backend already returned a flat array, pass it through
+  return Array.isArray(data) ? data : [];
 }
 
 // ============================================

@@ -68,6 +68,10 @@ class ProductionOrderDetailRead(ProductionOrderWithDetailsRead):
     Materials: List[ProductionOrderMaterialRead] = []
 
 
+# Back-compat alias expected by the production router
+ProductionOrderDetail = ProductionOrderDetailRead
+
+
 class ProductionCompletionRequest(BaseSchema):
     """Request to record completion against a production order."""
     QuantityCompleted: float = Field(..., gt=0)
@@ -75,3 +79,12 @@ class ProductionCompletionRequest(BaseSchema):
     WorkCenterID: Optional[int] = None
     Notes: Optional[str] = None
     CompletedBy: str = "api_user"
+
+
+class ProductionOrderFilter(BaseSchema):
+    """Filter object for listing production orders (used by router and agents)."""
+    status: Optional[str] = None
+    item_id: Optional[int] = None
+    work_center_id: Optional[int] = None
+    priority_max: Optional[int] = None
+    limit: int = 100
