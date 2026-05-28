@@ -57,6 +57,11 @@ try:
 except ImportError:
     purchasing_router = None
 
+try:
+    from app.api.routers.dashboard import router as dashboard_router
+except ImportError:
+    dashboard_router = None
+
 settings = get_settings()
 
 # Configure logging (excellent observability for agents too)
@@ -110,29 +115,28 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
-# CORS - critical for frontend dev (very defensive in DEBUG mode)
-cors_origins = list(settings.CORS_ORIGINS or [])
-
+# CORS - critical for frontend dev
 if settings.DEBUG:
-    # Always ensure common Vite / CRA dev origins are allowed during development
-    dev_origins = [
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:5174",   # sometimes Vite uses next port
-    ]
-    cors_origins = list(set(cors_origins + dev_origins))
-
-logger.info(f"CORS allowed origins: {cors_origins}")
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=cors_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+    # Extremely forgiving CORS for local development
+    # Allows any localhost/127.0.0.1 origin on any port (handles Vite port changes)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?",
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+    logger.info("CORS: Development mode - allowing all localhost origins via regex")
+else:
+    cors_origins = list(settings.CORS_ORIGINS or [])
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=cors_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+    logger.info(f"CORS allowed origins: {cors_origins}")
 
 
 # =============================================================================
@@ -180,6 +184,9 @@ if sales_router:
     app.include_router(sales_router, prefix=settings.API_V1_PREFIX)
 if purchasing_router:
     app.include_router(purchasing_router, prefix=settings.API_V1_PREFIX)
+
+if dashboard_router:
+    app.include_router(dashboard_router, prefix=settings.API_V1_PREFIX)
 
 # Update health to reflect progress
 

@@ -49,7 +49,7 @@ export default function Dashboard() {
     queryFn: () => getRecommendations(),
   });
 
-  const pendingRecs = recommendations.filter(r => r.status === 'PENDING');
+  const pendingRecs = recommendations.filter(r => r.status === 'PENDING' || r.status === 'PROPOSED');
 
   const approveMutation = useMutation({
     mutationFn: approveRecommendation,

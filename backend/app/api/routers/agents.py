@@ -113,7 +113,8 @@ async def list_recommendations(db: DBSessionDep, status: Optional[str] = Query(N
             "impact": "",
             "confidence": int(p.get("confidence", 75)),
             "actionType": p.get("action_type", "ADJUST_INVENTORY"),
-            "status": p.get("status", "PENDING").upper(),
+            # Normalize "proposed" → "PENDING" for frontend UI compatibility
+            "status": "PENDING" if (p.get("status") or "PENDING").lower() == "proposed" else (p.get("status") or "PENDING").upper(),
             "createdAt": "2026-05-27T10:00:00Z",
         }
         for p in proposals
@@ -206,7 +207,10 @@ async def approve_action_endpoint(
         )
     except Exception as e:
         await db.rollback()
-        raise HTTPException(500, f"Approve & execute failed: {e}")
+        import traceback
+        print("=== APPROVE & EXECUTE ERROR ===")
+        traceback.print_exc()
+        raise HTTPException(500, f"Approve & execute failed: {str(e)}")
 
 
 @router.post("/actions/{action_id}/reject")
