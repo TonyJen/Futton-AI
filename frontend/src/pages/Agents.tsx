@@ -27,21 +27,60 @@ export default function Agents() {
     lastSuggestedAgents?: number[];
   }>({});
 
+  // Store last agent run details for feedback
+  const [lastAgentRun, setLastAgentRun] = useState<{
+    agentId: number;
+    agentName: string;
+    proposalsCreated: number;
+    reasoningTrace: string[];
+  } | null>(null);
+
   const { data: agents = [] } = useQuery({ queryKey: ['agents'], queryFn: getAgents });
   const { data: recommendations = [] } = useQuery({ 
     queryKey: ['all-recommendations'], 
     queryFn: () => getRecommendations() 
   });
 
-  const pending = recommendations.filter(r => r.status === 'PENDING');
-  const executed = recommendations.filter(r => r.status !== 'PENDING');
+  const pending = recommendations.filter(r => r.status === 'PENDING' || r.status === 'PROPOSED');
+  const executed = recommendations.filter(r => r.status !== 'PENDING' && r.status !== 'PROPOSED');
 
   const runAgentMutation = useMutation({
     mutationFn: runAgent,
     onMutate: (id) => setRunningAgent(id),
-    onSuccess: (data) => {
+    onSuccess: (data, agentId) => {
       queryClient.invalidateQueries({ queryKey: ['all-recommendations'] });
-      toast.success(`Agent completed — ${data.recommendations.length} new recommendations generated`);
+
+      const proposalsCreated = data.proposals_created ?? 0;
+      const reasoningTrace = data.reasoning_trace ?? [];
+
+      // Find agent name for better UX
+      const agent = agents.find((a: Agent) => a.id === agentId);
+      const agentName = agent?.name || `Agent ${agentId}`;
+
+      // Store last run details for display
+      setLastAgentRun({
+        agentId,
+        agentName,
+        proposalsCreated,
+        reasoningTrace,
+      });
+
+      if (proposalsCreated > 0) {
+        toast.success(`${agentName} finished — ${proposalsCreated} new proposals created`);
+        
+        // Auto-scroll to Approval Queue for better UX
+        setTimeout(() => {
+          const queueElement = document.getElementById('approval-queue');
+          if (queueElement) {
+            queueElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 600);
+      } else {
+        toast.info(`${agentName} ran successfully but found no new proposals to make.`);
+      }
+    },
+    onError: (error: any) => {
+      toast.error(`Agent run failed: ${error?.message || 'Unknown error'}`);
     },
     onSettled: () => setRunningAgent(null),
   });
@@ -53,6 +92,9 @@ export default function Agents() {
       queryClient.invalidateQueries({ queryKey: ['all-recommendations'] });
       toast.success('Action executed successfully');
     },
+    onError: (error: any) => {
+      toast.error(`Approve failed: ${error?.response?.data?.detail || error?.message || 'Unknown error'}`);
+    },
     onSettled: () => setProcessingRec(null),
   });
 
@@ -62,6 +104,9 @@ export default function Agents() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['all-recommendations'] });
       toast.info('Recommendation rejected');
+    },
+    onError: (error: any) => {
+      toast.error(`Reject failed: ${error?.response?.data?.detail || error?.message || 'Unknown error'}`);
     },
     onSettled: () => setProcessingRec(null),
   });
@@ -196,8 +241,44 @@ export default function Agents() {
         </div>
       </div>
 
+      {/* Last Agent Run Feedback */}
+      {lastAgentRun && (
+        <div className="mb-8 p-5 border border-primary-200 rounded-2xl bg-primary-50/50">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <span className="font-semibold text-primary-800">Last Agent Run:</span>{' '}
+              <span className="font-medium">{lastAgentRun.agentName}</span>
+            </div>
+            <button 
+              onClick={() => setLastAgentRun(null)} 
+              className="text-xs text-primary-600 hover:text-primary-800"
+            >
+              Dismiss
+            </button>
+          </div>
+
+          <div className="text-sm mb-2">
+            <span className="font-medium">Proposals created:</span>{' '}
+            <span className={lastAgentRun.proposalsCreated > 0 ? "text-emerald-600 font-semibold" : "text-slate-500"}>
+              {lastAgentRun.proposalsCreated}
+            </span>
+          </div>
+
+          {lastAgentRun.reasoningTrace.length > 0 && (
+            <div>
+              <div className="text-xs font-medium text-slate-600 mb-1.5">Agent Reasoning Trace:</div>
+              <div className="bg-white border rounded-lg p-3 text-xs font-mono text-slate-700 space-y-1 max-h-32 overflow-auto">
+                {lastAgentRun.reasoningTrace.map((step, index) => (
+                  <div key={index}>• {step}</div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Approval Queue */}
-      <div className="mt-8">
+      <div id="approval-queue" className="mt-8">
         <div className="flex justify-between items-center mb-4">
           <h3 className="font-semibold tracking-tight">Approval Queue <Badge variant="warning">{pending.length} pending</Badge></h3>
         </div>

@@ -158,14 +158,21 @@ export async function getRecommendations(status?: string): Promise<AgentRecommen
   return res.data;
 }
 
-export async function runAgent(agentId: number): Promise<{ recommendations: AgentRecommendation[] }> {
+export async function runAgent(agentId: number): Promise<{
+  proposals_created: number;
+  reasoning_trace?: string[];
+  agent_name?: string;
+  status?: string;
+}> {
   if (USE_MOCK) {
-    await delay(1450); // Simulate serious thinking time
+    await delay(1450);
     const result = mock.simulateAgentRun(agentId);
-    return { recommendations: result.newRecs };
+    return {
+      proposals_created: result.newRecs?.length || 0,
+      reasoning_trace: ["Mock agent completed analysis", "Generated recommendations based on current data"],
+    };
   }
 
-  // Map frontend numeric ID to backend agent_name
   const agentNameMap: Record<number, string> = {
     1: 'mrp',
     2: 'inventory',
@@ -185,7 +192,11 @@ export async function approveRecommendation(id: number): Promise<AgentRecommenda
     if (!updated) throw new Error('Recommendation not found');
     return updated;
   }
-  const res = await api.post(`/agents/recommendations/${id}/approve`);
+  // Correct backend path + required body
+  const res = await api.post(`/agents/actions/${id}/approve`, {
+    approved_by: "UI User",
+    notes: "Approved from Agents Hub"
+  });
   return res.data;
 }
 
@@ -196,7 +207,11 @@ export async function rejectRecommendation(id: number): Promise<void> {
     if (!ok) throw new Error('Recommendation not found');
     return;
   }
-  await api.post(`/agents/recommendations/${id}/reject`);
+  // Correct backend path + required body
+  await api.post(`/agents/actions/${id}/reject`, {
+    rejected_by: "UI User",
+    reason: "Rejected from Agents Hub"
+  });
 }
 
 // ============================================
@@ -207,7 +222,7 @@ export async function getDashboardKpis(): Promise<KpiData> {
     await delay(160);
     // Compute live pending count
     const recs = mock.getLiveRecommendations();
-    const pending = recs.filter(r => r.status === 'PENDING').length;
+    const pending = recs.filter(r => r.status === 'PENDING' || r.status === 'PROPOSED').length;
     return { ...mock.MOCK_KPIS, pendingRecommendations: pending };
   }
   const res = await api.get<KpiData>('/dashboard/kpis');

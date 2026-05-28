@@ -13,7 +13,7 @@ interface RecommendationCardProps {
 }
 
 export function RecommendationCard({ rec, onApprove, onReject, isProcessing }: RecommendationCardProps) {
-  const isPending = rec.status === 'PENDING';
+  const isPending = rec.status === 'PENDING' || rec.status === 'PROPOSED';
 
   return (
     <div className="recommendation-card">
