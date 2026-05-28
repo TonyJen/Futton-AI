@@ -7,13 +7,14 @@ information before proposing actions.
 
 from __future__ import annotations
 
+from datetime import datetime, timedelta
 from typing import Any, Dict, List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 
 from app.db.models import (
     Item, Inventory, BillOfMaterials, ProductionOrder, ProductionOrderMaterial,
-    PurchaseOrder, SupplierItem
+    PurchaseOrder, SupplierItem, InventoryTransaction
 )
 
 
@@ -80,12 +81,65 @@ async def find_low_stock_and_shortages(db: AsyncSession, threshold_multiplier: f
 
 
 async def run_abc_analysis(db: AsyncSession) -> List[Dict[str, Any]]:
-    """Placeholder ABC analysis (returns some items as A/B/C)."""
-    # In a real system this would be a proper query
-    return [
-        {"item_id": 5, "class": "A", "turnover": 4.2},
-        {"item_id": 12, "class": "B", "turnover": 1.8},
-    ]
+    """
+    Real ABC analysis based on recent transaction volume + inventory value.
+    A = High turnover or high value items (should be tightly controlled)
+    B = Medium importance
+    C = Low turnover / low value
+    """
+    from app.db.models import Item, InventoryTransaction
+
+    # Get all items with their current inventory value
+    stmt = select(Item, Inventory).join(Inventory, Item.ItemID == Inventory.ItemID, isouter=True)
+    rows = (await db.execute(stmt)).all()
+
+    items_with_metrics = []
+    for item, inv in rows:
+        # Calculate approximate annual usage from transactions (last 90 days as proxy)
+        tx_stmt = select(func.sum(InventoryTransaction.Quantity)).where(
+            InventoryTransaction.ItemID == item.ItemID,
+            InventoryTransaction.TransactionDate >= datetime.utcnow() - timedelta(days=90),
+            InventoryTransaction.TransactionType.in_(["Issue", "Receipt"])
+        )
+        tx_result = await db.execute(tx_stmt)
+        usage = abs(float(tx_result.scalar() or 0))
+
+        value = float(item.StandardCost or 0) * (inv.QuantityOnHand or 0) if inv else 0
+
+        # Simple ABC scoring: combine usage volume + inventory value
+        score = (usage * 0.6) + (value / 100 * 0.4)
+
+        items_with_metrics.append({
+            "item_id": item.ItemID,
+            "item_name": item.ItemName,
+            "score": score,
+            "usage_90d": usage,
+            "inventory_value": round(value, 2),
+        })
+
+    # Sort by score descending and assign ABC classes
+    items_with_metrics.sort(key=lambda x: x["score"], reverse=True)
+    total = len(items_with_metrics)
+
+    result = []
+    for i, item in enumerate(items_with_metrics):
+        if i < total * 0.2:
+            abc_class = "A"
+        elif i < total * 0.5:
+            abc_class = "B"
+        else:
+            abc_class = "C"
+
+        result.append({
+            "item_id": item["item_id"],
+            "item_name": item["item_name"],
+            "class": abc_class,
+            "score": round(item["score"], 1),
+            "usage_90d": item["usage_90d"],
+            "inventory_value": item["inventory_value"],
+        })
+
+    return result
 
 
 async def get_item_inventory_status(db: AsyncSession, item_id: int) -> Dict[str, Any]:

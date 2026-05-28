@@ -84,8 +84,16 @@ class MRPPlanningAgent(BaseAgent):
             if "find_low_stock_and_shortages" in getattr(t, "name", ""):
                 raw = await t.ainvoke({"threshold_multiplier": 1.0})
                 state["current_data"]["shortages"] = raw
-                state["reasoning_trace"].append("Shortage detection complete")
+                state["reasoning_trace"].append(f"Shortage detection complete — {len(raw)} items at risk")
                 break
+
+        # Also run ABC for better prioritization in propose step
+        for t in self.tools:
+            if "run_abc_analysis" in getattr(t, "name", ""):
+                abc = await t.ainvoke({})
+                state["current_data"]["abc"] = abc
+                break
+
         return state
 
     async def _node_generate_and_persist(self, state: AgentState) -> AgentState:
@@ -95,12 +103,28 @@ class MRPPlanningAgent(BaseAgent):
         shortages = state.get("current_data", {}).get("shortages", [])
         bom_data = state.get("current_data", {}).get("bom", {})
 
-        # Smart proposal generation based on real shortage data
+        # Smarter proposal generation using ABC classification when available
+        abc_lookup = {item["item_id"]: item for item in state.get("current_data", {}).get("abc", [])}
+
         if shortages:
-            for shortage in shortages[:3]:  # Top 3 shortages
+            # Prioritize A-class items
+            def priority(s):
+                abc = abc_lookup.get(s.get("item_id"), {})
+                weight = {"A": 3, "B": 2, "C": 1}.get(abc.get("class"), 1)
+                return weight * 100 + s.get("shortage", 0)
+
+            prioritized = sorted(shortages, key=priority, reverse=True)
+
+            for shortage in prioritized[:3]:
                 item_id = shortage.get("item_id")
                 shortage_qty = shortage.get("shortage", 100)
-                recommended_qty = max(100, int(shortage_qty * 1.5))
+                abc_class = abc_lookup.get(item_id, {}).get("class", "C")
+
+                # More aggressive replenishment for A-class items
+                multiplier = 2.0 if abc_class == "A" else 1.5
+                recommended_qty = max(100, int(shortage_qty * multiplier))
+
+                confidence = 0.87 if abc_class == "A" else 0.78
 
                 action_id = await self.propose(
                     conv_id,
@@ -111,24 +135,34 @@ class MRPPlanningAgent(BaseAgent):
                         "WarehouseID": state["input_params"].get("warehouse_id", 1),
                     },
                     rationale=f"MRP detected shortage of {shortage.get('item_name', 'component')} "
-                              f"({shortage_qty:.0f} units below reorder point). Recommending replenishment.",
-                    confidence=0.82,
+                              f"({shortage_qty:.0f} units below reorder point, Class {abc_class}). "
+                              f"Recommending {recommended_qty} units replenishment.",
+                    confidence=confidence,
                 )
                 state["proposals"].append({"action_id": action_id})
                 proposals_made += 1
         else:
-            # Fallback if no shortage data
-            item_id = state["input_params"].get("item_id", 1)
+            # Improved fallback: Try to find the highest value item from ABC analysis if available
+            abc_data = state.get("current_data", {}).get("abc", [])
+            if abc_data:
+                # Pick the top A-class item, or highest scoring item
+                top_item = next((i for i in abc_data if i.get("class") == "A"), abc_data[0])
+                item_id = top_item["item_id"]
+                rationale = f"MRP fallback: Recommending safety stock for high-priority item {top_item.get('item_name', item_id)} based on ABC analysis."
+            else:
+                item_id = state["input_params"].get("item_id", 1)
+                rationale = "MRP analysis recommends safety stock replenishment based on BOM requirements."
+
             action_id = await self.propose(
                 conv_id,
                 action_type="CREATE_PURCHASE_ORDER",
                 payload={
                     "ItemID": item_id,
-                    "Quantity": state["input_params"].get("quantity", 100),
+                    "Quantity": state["input_params"].get("quantity", 150),
                     "WarehouseID": state["input_params"].get("warehouse_id", 1),
                 },
-                rationale="MRP analysis recommends safety stock replenishment based on BOM requirements.",
-                confidence=0.70,
+                rationale=rationale,
+                confidence=0.62,
             )
             state["proposals"].append({"action_id": action_id})
             proposals_made += 1

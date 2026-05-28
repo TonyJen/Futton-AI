@@ -122,16 +122,24 @@ class ProductionSchedulerAgent(BaseAgent):
             proposals_made += 1
 
         if proposals_made == 0:
-            # Safe fallback
-            action_id = await self.propose(
-                conv,
-                action_type="RELEASE_PRODUCTION_ORDER",
-                payload={"ProductionOrderID": 4412, "WorkCenter": "Assembly A"},
-                rationale="Scheduler fallback: release next available frame order during current capacity window.",
-                confidence=0.60,
-            )
-            state["proposals"].append({"action_id": action_id})
-            proposals_made += 1
+            # Smarter fallback: Use first available open order if any exist
+            if open_orders:
+                first_order = open_orders[0]
+                action_id = await self.propose(
+                    conv,
+                    action_type="RELEASE_PRODUCTION_ORDER",
+                    payload={
+                        "ProductionOrderID": first_order.get("production_order_id"),
+                        "WorkCenter": first_order.get("work_center", "Assembly A"),
+                    },
+                    rationale=f"Scheduler fallback: Releasing {first_order.get('order_number', 'next order')} "
+                              "as no clear bottlenecks were identified.",
+                    confidence=0.55,
+                )
+                state["proposals"].append({"action_id": action_id})
+                proposals_made += 1
+            else:
+                state["reasoning_trace"].append("No open orders or capacity issues detected.")
 
         state["status"] = "completed"
         state["conversation_id"] = conv
