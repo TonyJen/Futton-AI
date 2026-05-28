@@ -282,6 +282,7 @@ npm test
 ## License
 
 Internal project / Educational use.
+MIT License
 
 ---
 
