@@ -14,7 +14,15 @@ from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 
 from app.core.deps import get_db
-from app.db.models import Customer, SalesOrder, SalesQuote, SalesReturn, SalesRep
+from app.db.models import (
+    Customer,
+    SalesOrder,
+    SalesOrderDetail,
+    SalesQuote,
+    SalesQuoteDetail,
+    SalesReturn,
+    SalesRep,
+)
 
 logger = logging.getLogger(__name__)
 from app.schemas.common import MessageResponse
@@ -32,7 +40,12 @@ from app.schemas.sales import (
     SalesReturnRead,
     SalesRepRead,
 )
-from app.services.sales_service import create_quote, convert_quote_to_order, create_return
+from app.services.sales_service import (
+    create_quote,
+    convert_quote_to_order,
+    create_return,
+    get_next_sales_order_number,
+)
 
 router = APIRouter(prefix="/sales", tags=["Sales"])
 
@@ -74,7 +87,7 @@ async def get_sales_order(order_id: int, db=Depends(get_db)):
         .options(
             selectinload(SalesOrder.customer),
             selectinload(SalesOrder.warehouse),
-            selectinload(SalesOrder.details).selectinload("item"),
+            selectinload(SalesOrder.details).selectinload(SalesOrderDetail.item),
         )
     )
     result = await db.execute(stmt)
@@ -93,6 +106,7 @@ async def get_sales_order(order_id: int, db=Depends(get_db)):
 @router.post("/orders", response_model=SalesOrderRead, status_code=status.HTTP_201_CREATED)
 async def create_sales_order(payload: SalesOrderCreate, db=Depends(get_db)):
     order_data = payload.model_dump(exclude={"details"})
+    order_data["OrderNumber"] = await get_next_sales_order_number(db)
     so = SalesOrder(**order_data)
     db.add(so)
     await db.flush()
@@ -157,7 +171,7 @@ async def get_sales_quote(quote_id: int, db=Depends(get_db)):
         select(SalesQuote)
         .where(SalesQuote.QuoteID == quote_id)
         .options(
-            selectinload(SalesQuote.details).selectinload("item"),
+            selectinload(SalesQuote.details).selectinload(SalesQuoteDetail.item),
             selectinload(SalesQuote.customer),
         )
     )

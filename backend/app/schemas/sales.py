@@ -157,6 +157,13 @@ class SalesOrderDetailBase(BaseModel):
     DiscountPercent: float = 0.0
 
 
+class SalesOrderDetailRead(SalesOrderDetailBase):
+    SODetailID: int
+
+    class Config:
+        from_attributes = True
+
+
 class SalesOrderCreate(BaseModel):
     CustomerID: int
     WarehouseID: int
@@ -189,7 +196,7 @@ class SalesOrderUpdate(BaseModel):
 class SalesOrderDetailReadFull(SalesOrderRead):
     CustomerName: Optional[str] = None
     WarehouseName: Optional[str] = None
-    details: List = []  # Can be expanded later
+    details: List[SalesOrderDetailRead] = []
 
     class Config:
         from_attributes = True

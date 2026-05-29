@@ -24,6 +24,7 @@ from app.db.models import (
     Item,
     Inventory,
     InventoryTransaction,
+    TransactionType,
 )
 
 
@@ -144,6 +145,16 @@ async def receive_goods(
 
     received_by = payload.get("received_by", "System")
     lines_received = payload.get("lines", [])
+    receipt_type = (
+        await db.execute(
+            select(TransactionType).where(
+                (TransactionType.TypeCode == "PO-RCV") |
+                (TransactionType.TypeName == "Purchase Order Receipt")
+            )
+        )
+    ).scalar_one_or_none()
+    if not receipt_type:
+        raise ValueError("Receipt transaction type is not configured")
 
     total_received_value = 0.0
 
@@ -184,10 +195,11 @@ async def receive_goods(
             tx = InventoryTransaction(
                 ItemID=detail.ItemID,
                 WarehouseID=po.WarehouseID,
-                TransactionType="Receipt",
+                TransactionTypeID=receipt_type.TransactionTypeID,
                 Quantity=delta,
                 UnitCost=detail.UnitPrice,
                 ReferenceNumber=po.PONumber,
+                ReferenceType="PO",
                 Notes=f"PO Receiving - {received_by}",
                 CreatedBy=received_by,
             )

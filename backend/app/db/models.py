@@ -397,7 +397,7 @@ class ProductionOrderMaterial(Base):
 # =============================================================================
 
 
-class Customer(Base, TimestampMixin):
+class Customer(Base):
     __tablename__ = "Customer"
 
     CustomerID: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -416,6 +416,9 @@ class Customer(Base, TimestampMixin):
     SalesRepID: Mapped[Optional[int]] = mapped_column(ForeignKey("SalesRep.SalesRepID"))
     TerritoryID: Mapped[Optional[int]] = mapped_column(ForeignKey("SalesTerritory.TerritoryID"))
     IsActive: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    CreatedDate: Mapped[Optional[datetime]] = mapped_column(
+        DateTime, server_default=func.now(), nullable=True
+    )
 
     sales_orders: Mapped[List["SalesOrder"]] = relationship(back_populates="customer")
     sales_rep: Mapped[Optional["SalesRep"]] = relationship(back_populates="customers")
@@ -499,7 +502,7 @@ class SalesOrderDetail(Base):
 # PHASE 2 SALES & CRM MODELS
 # =============================================================================
 
-class SalesQuote(Base, TimestampMixin):
+class SalesQuote(Base):
     __tablename__ = "SalesQuote"
 
     QuoteID: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -520,6 +523,9 @@ class SalesQuote(Base, TimestampMixin):
     ConvertedToOrderID: Mapped[Optional[int]] = mapped_column(ForeignKey("SalesOrder.SalesOrderID"))
     Notes: Mapped[Optional[str]] = mapped_column(Text)
     CreatedBy: Mapped[Optional[str]] = mapped_column(String(100))
+    CreatedDate: Mapped[Optional[datetime]] = mapped_column(
+        DateTime, server_default=func.now(), nullable=True
+    )
 
     customer: Mapped["Customer"] = relationship(back_populates="quotes")
     sales_channel: Mapped[Optional["SalesChannel"]] = relationship()
@@ -547,7 +553,7 @@ class SalesQuoteDetail(Base):
     item: Mapped["Item"] = relationship()
 
 
-class SalesReturn(Base, TimestampMixin):
+class SalesReturn(Base):
     __tablename__ = "SalesReturn"
 
     ReturnID: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -564,6 +570,9 @@ class SalesReturn(Base, TimestampMixin):
     Notes: Mapped[Optional[str]] = mapped_column(Text)
     ApprovedBy: Mapped[Optional[str]] = mapped_column(String(100))
     ApprovedDate: Mapped[Optional[str]] = mapped_column(String(30))
+    CreatedDate: Mapped[Optional[datetime]] = mapped_column(
+        DateTime, server_default=func.now(), nullable=True
+    )
 
     sales_order: Mapped["SalesOrder"] = relationship()
     customer: Mapped["Customer"] = relationship(back_populates="returns")

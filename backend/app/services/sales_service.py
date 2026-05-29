@@ -11,7 +11,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import List, Optional
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -30,6 +30,19 @@ from app.db.models import (
 # =============================================================================
 # QUOTE SERVICES
 # =============================================================================
+
+async def get_next_sales_order_number(db: AsyncSession) -> str:
+    year = datetime.now().year
+    latest_order_number = (
+        await db.execute(
+            select(func.max(SalesOrder.OrderNumber)).where(
+                SalesOrder.OrderNumber.like(f"SO-{year}-%")
+            )
+        )
+    ).scalar_one_or_none()
+    next_sequence = int(latest_order_number.rsplit("-", 1)[-1]) + 1 if latest_order_number else 1
+    return f"SO-{year}-{next_sequence:04d}"
+
 
 async def create_quote(db: AsyncSession, payload: dict) -> SalesQuote:
     """Create a new Sales Quote with details."""
@@ -72,7 +85,7 @@ async def create_quote(db: AsyncSession, payload: dict) -> SalesQuote:
         subtotal += line_total
 
     quote.Subtotal = subtotal
-    quote.TotalAmount = subtotal + quote.TaxAmount + quote.ShippingAmount - quote.DiscountAmount
+    quote.TotalAmount = subtotal + quote.TaxAmount - quote.DiscountAmount
 
     await db.flush()
     await db.refresh(quote)
@@ -105,7 +118,7 @@ async def convert_quote_to_order(db: AsyncSession, quote_id: int) -> SalesOrder:
     from app.db.models import SalesOrderDetail
 
     order = SalesOrder(
-        OrderNumber=f"SO-{quote.QuoteNumber[3:]}",  # Reuse number pattern
+        OrderNumber=await get_next_sales_order_number(db),
         CustomerID=quote.CustomerID,
         WarehouseID=1,  # Default warehouse - can be improved later
         SalesChannelID=quote.SalesChannelID,
@@ -114,7 +127,7 @@ async def convert_quote_to_order(db: AsyncSession, quote_id: int) -> SalesOrder:
         Status="Draft",
         Subtotal=quote.Subtotal,
         TaxAmount=quote.TaxAmount,
-        ShippingAmount=quote.ShippingAmount,
+        ShippingAmount=0.0,
         DiscountAmount=quote.DiscountAmount,
         TotalAmount=quote.TotalAmount,
         Notes=f"Converted from Quote {quote.QuoteNumber}",
