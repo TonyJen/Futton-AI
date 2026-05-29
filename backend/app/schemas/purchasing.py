@@ -84,6 +84,8 @@ class PurchaseOrderDetailRead(PurchaseOrderDetailBase):
     PODetailID: int
     QuantityReceived: float = 0.0
     LineTotal: Optional[float] = None
+    ItemCode: Optional[str] = None
+    ItemName: Optional[str] = None
 
     model_config = {"from_attributes": True}
 
@@ -113,6 +115,7 @@ class PurchaseOrderRead(PurchaseOrderBase):
     ShippingAmount: float
     TotalAmount: float
     CreatedBy: Optional[str] = None
+    SupplierName: Optional[str] = None
 
     model_config = {"from_attributes": True}
 

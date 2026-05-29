@@ -72,8 +72,19 @@ async def create_customer(payload: CustomerCreate, db=Depends(get_db)):
 # Sales Orders
 @router.get("/orders", response_model=List[SalesOrderRead])
 async def list_sales_orders(db=Depends(get_db)):
-    result = await db.execute(select(SalesOrder).order_by(SalesOrder.SalesOrderID.desc()))
-    return [SalesOrderRead.model_validate(o) for o in result.scalars().all()]
+    result = await db.execute(
+        select(SalesOrder)
+        .options(selectinload(SalesOrder.customer))
+        .order_by(SalesOrder.SalesOrderID.desc())
+    )
+    orders = result.scalars().all()
+    dtos = []
+    for order in orders:
+        dto = SalesOrderRead.model_validate(order)
+        if order.customer:
+            dto.CustomerName = order.customer.CustomerName
+        dtos.append(dto)
+    return dtos
 
 
 @router.get("/orders/{order_id}", response_model=SalesOrderDetailReadFull)
@@ -99,6 +110,10 @@ async def get_sales_order(order_id: int, db=Depends(get_db)):
         dto.CustomerName = so.customer.CustomerName
     if so.warehouse:
         dto.WarehouseName = so.warehouse.WarehouseName
+    for detail_dto, detail_model in zip(dto.details, so.details):
+        if detail_model.item:
+            detail_dto.ItemCode = detail_model.item.ItemCode
+            detail_dto.ItemName = detail_model.item.ItemName
     return dto
 
 
@@ -156,8 +171,19 @@ async def create_sales_quote(payload: SalesQuoteCreate, db=Depends(get_db)):
 @router.get("/quotes", response_model=List[SalesQuoteRead])
 async def list_sales_quotes(db=Depends(get_db)):
     try:
-        result = await db.execute(select(SalesQuote).order_by(SalesQuote.QuoteID.desc()))
-        return [SalesQuoteRead.model_validate(q) for q in result.scalars().all()]
+        result = await db.execute(
+            select(SalesQuote)
+            .options(selectinload(SalesQuote.customer))
+            .order_by(SalesQuote.QuoteID.desc())
+        )
+        quotes = result.scalars().all()
+        dtos = []
+        for quote in quotes:
+            dto = SalesQuoteRead.model_validate(quote)
+            if quote.customer:
+                dto.CustomerName = quote.customer.CustomerName
+            dtos.append(dto)
+        return dtos
     except Exception as e:
         # In dev, don't crash the whole page if the table is empty or schema is evolving
         logger.warning(f"Failed to load quotes: {e}")
@@ -182,6 +208,10 @@ async def get_sales_quote(quote_id: int, db=Depends(get_db)):
     dto = SalesQuoteDetailReadFull.model_validate(quote)
     if quote.customer:
         dto.CustomerName = quote.customer.CustomerName
+    for detail_dto, detail_model in zip(dto.details, quote.details):
+        if detail_model.item:
+            detail_dto.ItemCode = detail_model.item.ItemCode
+            detail_dto.ItemName = detail_model.item.ItemName
     return dto
 
 
@@ -210,8 +240,21 @@ async def create_sales_return(payload: SalesReturnCreate, db=Depends(get_db)):
 @router.get("/returns", response_model=List[SalesReturnRead])
 async def list_returns(db=Depends(get_db)):
     try:
-        result = await db.execute(select(SalesReturn).order_by(SalesReturn.ReturnID.desc()))
-        return [SalesReturnRead.model_validate(r) for r in result.scalars().all()]
+        result = await db.execute(
+            select(SalesReturn)
+            .options(selectinload(SalesReturn.customer), selectinload(SalesReturn.sales_order))
+            .order_by(SalesReturn.ReturnID.desc())
+        )
+        returns = result.scalars().all()
+        dtos = []
+        for sales_return in returns:
+            dto = SalesReturnRead.model_validate(sales_return)
+            if sales_return.customer:
+                dto.CustomerName = sales_return.customer.CustomerName
+            if sales_return.sales_order:
+                dto.OrderNumber = sales_return.sales_order.OrderNumber
+            dtos.append(dto)
+        return dtos
     except Exception as e:
         logger.warning(f"Failed to load returns: {e}")
         return []

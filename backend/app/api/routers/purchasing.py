@@ -28,6 +28,20 @@ from app.services.purchasing_service import (
 router = APIRouter(prefix="/purchasing", tags=["Purchasing"])
 
 
+def _serialize_supplier_item(si):
+    item = si.item
+    return {
+        "supplierItemId": si.SupplierItemID,
+        "itemId": si.ItemID,
+        "itemCode": item.ItemCode if item else None,
+        "itemName": item.ItemName if item else None,
+        "unitPrice": si.UnitPrice,
+        "minimumOrderQuantity": si.MinimumOrderQuantity,
+        "leadTimeDays": si.LeadTimeDays,
+        "isPreferred": si.IsPreferred,
+    }
+
+
 # Suppliers
 @router.get("/suppliers", response_model=List[SupplierRead])
 async def list_all_suppliers(active_only: bool = True, db=Depends(get_db)):
@@ -39,20 +53,9 @@ async def list_all_suppliers(active_only: bool = True, db=Depends(get_db)):
 async def get_supplier_pricing(supplier_id: int, db=Depends(get_db)):
     """Returns pricing / lead time data for a supplier (used by agents and UI)."""
     from app.services.purchasing_service import get_supplier_items
+
     items = await get_supplier_items(db, supplier_id)
-    return [
-        {
-            "supplierItemId": si.SupplierItemID,
-            "itemId": si.ItemID,
-            "itemCode": si.item.itemCode if si.item else None,
-            "itemName": si.item.itemName if si.item else None,
-            "unitPrice": si.UnitPrice,
-            "minimumOrderQuantity": si.MinimumOrderQuantity,
-            "leadTimeDays": si.LeadTimeDays,
-            "isPreferred": si.IsPreferred,
-        }
-        for si in items
-    ]
+    return [_serialize_supplier_item(si) for si in items]
 
 
 # Purchase Orders
@@ -68,7 +71,13 @@ async def create_po(payload: PurchaseOrderCreate, db=Depends(get_db)):
 @router.get("/purchase-orders", response_model=List[PurchaseOrderRead])
 async def list_pos(status: Optional[str] = None, db=Depends(get_db)):
     pos = await list_purchase_orders(db, status=status)
-    return [PurchaseOrderRead.model_validate(p) for p in pos]
+    dtos = []
+    for po in pos:
+        dto = PurchaseOrderRead.model_validate(po)
+        if po.supplier:
+            dto.SupplierName = po.supplier.SupplierName
+        dtos.append(dto)
+    return dtos
 
 
 @router.get("/purchase-orders/{po_id}", response_model=PurchaseOrderDetailReadFull)
@@ -82,6 +91,10 @@ async def get_po(po_id: int, db=Depends(get_db)):
         dto.SupplierName = po.supplier.SupplierName
     if po.warehouse:
         dto.WarehouseName = po.warehouse.WarehouseName
+    for detail_dto, detail_model in zip(dto.details, po.details):
+        if detail_model.item:
+            detail_dto.ItemCode = detail_model.item.ItemCode
+            detail_dto.ItemName = detail_model.item.ItemName
     return dto
 
 

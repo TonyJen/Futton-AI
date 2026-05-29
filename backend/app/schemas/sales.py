@@ -55,6 +55,8 @@ class SalesQuoteDetailBase(BaseModel):
 class SalesQuoteDetailRead(SalesQuoteDetailBase):
     QuoteDetailID: int
     LineTotal: Optional[float] = None
+    ItemCode: Optional[str] = None
+    ItemName: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -82,6 +84,7 @@ class SalesQuoteRead(SalesQuoteBase):
     TaxAmount: float
     TotalAmount: float
     ConvertedToOrderID: Optional[int] = None
+    CustomerName: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -124,6 +127,8 @@ class SalesReturnRead(SalesReturnBase):
     RefundAmount: float
     RestockingFee: float
     ApprovedBy: Optional[str] = None
+    CustomerName: Optional[str] = None
+    OrderNumber: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -159,6 +164,8 @@ class SalesOrderDetailBase(BaseModel):
 
 class SalesOrderDetailRead(SalesOrderDetailBase):
     SODetailID: int
+    ItemCode: Optional[str] = None
+    ItemName: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -183,6 +190,8 @@ class SalesOrderRead(BaseModel):
     OrderNumber: str
     Status: str
     TotalAmount: float
+    CustomerID: Optional[int] = None
+    CustomerName: Optional[str] = None
 
     class Config:
         from_attributes = True

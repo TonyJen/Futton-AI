@@ -110,7 +110,11 @@ async def create_purchase_order(db: AsyncSession, payload: Dict[str, Any]) -> Pu
 
 
 async def list_purchase_orders(db: AsyncSession, status: Optional[str] = None) -> List[PurchaseOrder]:
-    stmt = select(PurchaseOrder).order_by(PurchaseOrder.PurchaseOrderID.desc())
+    stmt = (
+        select(PurchaseOrder)
+        .options(selectinload(PurchaseOrder.supplier))
+        .order_by(PurchaseOrder.PurchaseOrderID.desc())
+    )
     if status:
         stmt = stmt.where(PurchaseOrder.Status == status)
     result = await db.execute(stmt)

@@ -30,6 +30,184 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+function pick<T>(value: T | undefined, fallback: T | undefined): T | undefined {
+  return value ?? fallback;
+}
+
+function normalizeCustomer(customer: any) {
+  return {
+    ...customer,
+    customerId: pick(customer.customerId, customer.CustomerID),
+    customerCode: pick(customer.customerCode, customer.CustomerCode),
+    customerName: pick(customer.customerName, customer.CustomerName),
+    customerType: pick(customer.customerType, customer.CustomerType),
+    email: pick(customer.email, customer.Email),
+    phone: pick(customer.phone, customer.Phone),
+    city: pick(customer.city, customer.City),
+    state: pick(customer.state, customer.State),
+    country: pick(customer.country, customer.Country),
+  };
+}
+
+function normalizeSalesRep(rep: any) {
+  const firstName = pick(rep.firstName, rep.FirstName);
+  const lastName = pick(rep.lastName, rep.LastName);
+  return {
+    ...rep,
+    salesRepId: pick(rep.salesRepId, rep.SalesRepID),
+    fullName: pick(rep.fullName, [firstName, lastName].filter(Boolean).join(' ')),
+    email: pick(rep.email, rep.Email),
+    territory: pick(rep.territory, rep.Territory),
+    ytdSales: pick(rep.ytdSales, rep.YTDSales) ?? 0,
+    commissionRate: pick(rep.commissionRate, rep.CommissionRate) ?? 0,
+  };
+}
+
+function normalizeSalesDetail(detail: any) {
+  return {
+    ...detail,
+    quoteDetailId: pick(detail.quoteDetailId, detail.QuoteDetailID),
+    soDetailId: pick(detail.soDetailId, detail.SODetailID),
+    salesOrderDetailId: pick(detail.salesOrderDetailId, detail.SODetailID),
+    itemId: pick(detail.itemId, detail.ItemID),
+    itemCode: pick(detail.itemCode, detail.ItemCode),
+    itemName: pick(detail.itemName, detail.ItemName),
+    quantity: pick(detail.quantity, detail.Quantity),
+    unitPrice: pick(detail.unitPrice, detail.UnitPrice),
+    lineTotal: pick(detail.lineTotal, detail.LineTotal),
+    discountPercent: pick(detail.discountPercent, detail.DiscountPercent) ?? 0,
+  };
+}
+
+function normalizeQuote(quote: any) {
+  return {
+    ...quote,
+    quoteId: pick(quote.quoteId, quote.QuoteID),
+    quoteNumber: pick(quote.quoteNumber, quote.QuoteNumber),
+    customerId: pick(quote.customerId, quote.CustomerID),
+    customerName: pick(quote.customerName, quote.CustomerName),
+    salesRepId: pick(quote.salesRepId, quote.SalesRepID),
+    quoteDate: pick(quote.quoteDate, quote.QuoteDate),
+    expirationDate: pick(quote.expirationDate, quote.ExpirationDate),
+    status: pick(quote.status, quote.Status),
+    subtotal: pick(quote.subtotal, quote.Subtotal),
+    discountAmount: pick(quote.discountAmount, quote.DiscountAmount) ?? 0,
+    taxAmount: pick(quote.taxAmount, quote.TaxAmount) ?? 0,
+    shippingAmount: pick(quote.shippingAmount, quote.ShippingAmount) ?? 0,
+    totalAmount: pick(quote.totalAmount, quote.TotalAmount),
+    convertedToOrderId: pick(quote.convertedToOrderId, quote.ConvertedToOrderID),
+    details: Array.isArray(quote.details) ? quote.details.map(normalizeSalesDetail) : quote.details,
+  };
+}
+
+function normalizeSalesOrder(order: any) {
+  return {
+    ...order,
+    salesOrderId: pick(order.salesOrderId, order.SalesOrderID),
+    orderId: pick(order.orderId, order.SalesOrderID),
+    orderNumber: pick(order.orderNumber, order.OrderNumber),
+    customerId: pick(order.customerId, order.CustomerID),
+    customerName: pick(order.customerName, order.CustomerName),
+    orderDate: pick(order.orderDate, order.OrderDate),
+    dueDate: pick(order.dueDate, order.RequestedDeliveryDate),
+    status: pick(order.status, order.Status),
+    totalAmount: pick(order.totalAmount, order.TotalAmount),
+    details: Array.isArray(order.details) ? order.details.map(normalizeSalesDetail) : order.details,
+  };
+}
+
+function normalizeReturn(ret: any) {
+  return {
+    ...ret,
+    returnId: pick(ret.returnId, ret.ReturnID),
+    returnNumber: pick(ret.returnNumber, ret.ReturnNumber),
+    salesOrderId: pick(ret.salesOrderId, ret.SalesOrderID),
+    customerId: pick(ret.customerId, ret.CustomerID),
+    customerName: pick(ret.customerName, ret.CustomerName),
+    orderNumber: pick(ret.orderNumber, ret.OrderNumber),
+    returnDate: pick(ret.returnDate, ret.ReturnDate),
+    status: pick(ret.status, ret.Status),
+    refundAmount: pick(ret.refundAmount, ret.RefundAmount) ?? 0,
+    restockingFee: pick(ret.restockingFee, ret.RestockingFee) ?? 0,
+    notes: pick(ret.notes, ret.Notes),
+  };
+}
+
+function normalizeSupplier(supplier: any) {
+  return {
+    ...supplier,
+    supplierId: pick(supplier.supplierId, supplier.SupplierID),
+    supplierCode: pick(supplier.supplierCode, supplier.SupplierCode),
+    supplierName: pick(supplier.supplierName, supplier.SupplierName),
+    email: pick(supplier.email, supplier.Email),
+    phone: pick(supplier.phone, supplier.Phone),
+    city: pick(supplier.city, supplier.City),
+    state: pick(supplier.state, supplier.State),
+    country: pick(supplier.country, supplier.Country),
+  };
+}
+
+function normalizePurchaseOrderDetail(detail: any) {
+  return {
+    ...detail,
+    poDetailId: pick(detail.poDetailId, detail.PODetailID),
+    itemId: pick(detail.itemId, detail.ItemID),
+    itemCode: pick(detail.itemCode, detail.ItemCode),
+    itemName: pick(detail.itemName, detail.ItemName),
+    quantity: pick(detail.quantity, detail.Quantity),
+    unitPrice: pick(detail.unitPrice, detail.UnitPrice),
+    quantityReceived: pick(detail.quantityReceived, detail.QuantityReceived) ?? 0,
+    lineTotal: pick(detail.lineTotal, detail.LineTotal),
+  };
+}
+
+function normalizePurchaseOrder(po: any) {
+  return {
+    ...po,
+    poId: pick(po.poId, po.PurchaseOrderID),
+    poNumber: pick(po.poNumber, po.PONumber),
+    supplierId: pick(po.supplierId, po.SupplierID),
+    supplierName: pick(po.supplierName, po.SupplierName),
+    warehouseId: pick(po.warehouseId, po.WarehouseID),
+    orderDate: pick(po.orderDate, po.OrderDate),
+    expectedDeliveryDate: pick(po.expectedDeliveryDate, po.ExpectedDeliveryDate),
+    status: pick(po.status, po.Status),
+    subtotal: pick(po.subtotal, po.Subtotal),
+    taxAmount: pick(po.taxAmount, po.TaxAmount) ?? 0,
+    shippingAmount: pick(po.shippingAmount, po.ShippingAmount) ?? 0,
+    totalAmount: pick(po.totalAmount, po.TotalAmount),
+    notes: pick(po.notes, po.Notes),
+    details: Array.isArray(po.details) ? po.details.map(normalizePurchaseOrderDetail) : po.details,
+  };
+}
+
+function toPascalPurchaseOrderPayload(payload: any) {
+  return {
+    SupplierID: payload.supplierId ?? payload.SupplierID,
+    WarehouseID: payload.warehouseId ?? payload.WarehouseID ?? 1,
+    OrderDate: payload.orderDate ?? payload.OrderDate,
+    ExpectedDeliveryDate: payload.expectedDeliveryDate ?? payload.ExpectedDeliveryDate,
+    Notes: payload.notes ?? payload.Notes,
+    details: (payload.details ?? payload.Details ?? []).map((detail: any, index: number) => ({
+      LineNumber: detail.lineNumber ?? detail.LineNumber ?? index + 1,
+      ItemID: detail.itemId ?? detail.ItemID,
+      Quantity: detail.quantity ?? detail.Quantity ?? detail.orderedQty ?? detail.OrderedQty,
+      UnitPrice: detail.unitPrice ?? detail.UnitPrice ?? detail.unitCost ?? detail.UnitCost,
+    })),
+  };
+}
+
+function toPascalReceivePayload(payload: any) {
+  return {
+    received_by: payload.received_by ?? payload.receivedBy ?? 'UI User',
+    notes: payload.notes ?? payload.Notes,
+    lines: (payload.lines ?? payload.Lines ?? []).map((line: any) => ({
+      PODetailID: line.poDetailId ?? line.PODetailID,
+      QuantityReceived: line.quantityReceived ?? line.QuantityReceived,
+    })),
+  };
+}
+
 // Simple delay helper to simulate network
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -284,7 +462,7 @@ export async function getQuotes(): Promise<any[]> {
     return mock.getMockQuotes();
   }
   const res = await api.get('/sales/quotes');
-  return res.data;
+  return res.data.map(normalizeQuote);
 }
 
 export async function getQuote(quoteId: number): Promise<any> {
@@ -293,7 +471,7 @@ export async function getQuote(quoteId: number): Promise<any> {
     return mock.getMockQuoteById(quoteId);
   }
   const res = await api.get(`/sales/quotes/${quoteId}`);
-  return res.data;
+  return normalizeQuote(res.data);
 }
 
 export async function createQuote(payload: any): Promise<any> {
@@ -311,7 +489,7 @@ export async function createQuote(payload: any): Promise<any> {
   }
   const normalized = toPascalQuotePayload(payload);
   const res = await api.post('/sales/quotes', normalized);
-  return res.data;
+  return normalizeQuote(res.data);
 }
 
 export async function convertQuoteToOrder(quoteId: number): Promise<any> {
@@ -325,7 +503,7 @@ export async function convertQuoteToOrder(quoteId: number): Promise<any> {
     };
   }
   const res = await api.post(`/sales/quotes/${quoteId}/convert`);
-  return res.data;
+  return normalizeSalesOrder(res.data);
 }
 
 export async function updateQuoteStatus(quoteId: number, status: string): Promise<any> {
@@ -334,7 +512,7 @@ export async function updateQuoteStatus(quoteId: number, status: string): Promis
     return { success: true, quoteId, newStatus: status };
   }
   const res = await api.patch(`/sales/quotes/${quoteId}/status`, { status });
-  return res.data;
+  return normalizeQuote(res.data);
 }
 
 // ============================================
@@ -346,7 +524,7 @@ export async function getCustomers(): Promise<any[]> {
     return mock.getMockCustomers();
   }
   const res = await api.get('/sales/customers');
-  return res.data;
+  return res.data.map(normalizeCustomer);
 }
 
 // ============================================
@@ -358,7 +536,7 @@ export async function getSalesOrders(): Promise<any[]> {
     return mock.getMockSalesOrders();
   }
   const res = await api.get('/sales/orders');
-  return res.data;
+  return res.data.map(normalizeSalesOrder);
 }
 
 // ============================================
@@ -370,7 +548,7 @@ export async function getReturns(): Promise<any[]> {
     return mock.getMockReturns();
   }
   const res = await api.get('/sales/returns');
-  return res.data;
+  return res.data.map(normalizeReturn);
 }
 
 export async function createReturn(payload: any): Promise<any> {
@@ -385,7 +563,7 @@ export async function createReturn(payload: any): Promise<any> {
     };
   }
   const res = await api.post('/sales/returns', payload);
-  return res.data;
+  return normalizeReturn(res.data);
 }
 
 // ============================================
@@ -397,7 +575,7 @@ export async function getSalesReps(): Promise<any[]> {
     return mock.getMockSalesReps();
   }
   const res = await api.get('/sales/reps'); // backend may expose later
-  return res.data;
+  return res.data.map(normalizeSalesRep);
 }
 
 // ============================================
@@ -420,7 +598,7 @@ export async function getSuppliers(): Promise<any[]> {
     return mock.getMockSuppliers();
   }
   const res = await api.get('/purchasing/suppliers');
-  return res.data;
+  return res.data.map(normalizeSupplier);
 }
 
 export async function getPurchaseOrders(status?: string): Promise<any[]> {
@@ -431,7 +609,7 @@ export async function getPurchaseOrders(status?: string): Promise<any[]> {
     return pos;
   }
   const res = await api.get('/purchasing/purchase-orders', { params: { status } });
-  return res.data;
+  return res.data.map(normalizePurchaseOrder);
 }
 
 export async function getPurchaseOrder(poId: number): Promise<any> {
@@ -440,7 +618,7 @@ export async function getPurchaseOrder(poId: number): Promise<any> {
     return mock.getMockPurchaseOrderById(poId);
   }
   const res = await api.get(`/purchasing/purchase-orders/${poId}`);
-  return res.data;
+  return normalizePurchaseOrder(res.data);
 }
 
 export async function createPurchaseOrder(payload: any): Promise<any> {
@@ -455,8 +633,8 @@ export async function createPurchaseOrder(payload: any): Promise<any> {
     };
     return newPo;
   }
-  const res = await api.post('/purchasing/purchase-orders', payload);
-  return res.data;
+  const res = await api.post('/purchasing/purchase-orders', toPascalPurchaseOrderPayload(payload));
+  return normalizePurchaseOrder(res.data);
 }
 
 export async function receiveGoods(poId: number, payload: any): Promise<any> {
@@ -469,7 +647,7 @@ export async function receiveGoods(poId: number, payload: any): Promise<any> {
       message: 'Goods received and inventory updated',
     };
   }
-  const res = await api.post(`/purchasing/purchase-orders/${poId}/receive`, payload);
+  const res = await api.post(`/purchasing/purchase-orders/${poId}/receive`, toPascalReceivePayload(payload));
   return res.data;
 }
 
