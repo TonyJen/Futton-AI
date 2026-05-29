@@ -1,4 +1,3 @@
-import React from 'react';
 import { Badge } from '../ui/Badge';
 import { getStatusColor } from '@/lib/utils';
 

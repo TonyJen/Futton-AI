@@ -14,7 +14,7 @@ from sqlalchemy import select, func
 
 from app.db.models import (
     Item, Inventory, BillOfMaterials, ProductionOrder, ProductionOrderMaterial,
-    PurchaseOrder, SupplierItem, InventoryTransaction
+    PurchaseOrder, SupplierItem, InventoryTransaction, TransactionType
 )
 
 
@@ -96,10 +96,17 @@ async def run_abc_analysis(db: AsyncSession) -> List[Dict[str, Any]]:
     items_with_metrics = []
     for item, inv in rows:
         # Calculate approximate annual usage from transactions (last 90 days as proxy)
-        tx_stmt = select(func.sum(InventoryTransaction.Quantity)).where(
-            InventoryTransaction.ItemID == item.ItemID,
-            InventoryTransaction.TransactionDate >= datetime.utcnow() - timedelta(days=90),
-            InventoryTransaction.TransactionType.in_(["Issue", "Receipt"])
+        tx_stmt = (
+            select(func.sum(func.abs(InventoryTransaction.Quantity)))
+            .join(
+                TransactionType,
+                InventoryTransaction.TransactionTypeID == TransactionType.TransactionTypeID,
+            )
+            .where(
+                InventoryTransaction.ItemID == item.ItemID,
+                InventoryTransaction.TransactionDate >= datetime.now() - timedelta(days=90),
+                TransactionType.TypeName.in_(["Issue", "Receipt"]),
+            )
         )
         tx_result = await db.execute(tx_stmt)
         usage = abs(float(tx_result.scalar() or 0))
@@ -147,14 +154,14 @@ async def get_item_inventory_status(db: AsyncSession, item_id: int) -> Dict[str,
     stmt = select(Inventory).where(Inventory.ItemID == item_id)
     rows = (await db.execute(stmt)).scalars().all()
 
-    total = sum(float(r.QuantityAvailable or 0) for r in rows)
+    total = sum(float(r.quantity_available or 0) for r in rows)
     return {
         "item_id": item_id,
         "total_available": total,
         "warehouses": [
             {
                 "warehouse_id": r.WarehouseID,
-                "available": float(r.QuantityAvailable or 0),
+                "available": float(r.quantity_available or 0),
             }
             for r in rows
         ],

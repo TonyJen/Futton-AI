@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getInventory, getInventoryTransactions } from '@/lib/api';
 import { Header } from '@/components/layout/Header';
@@ -76,7 +76,7 @@ export default function Inventory() {
             <tr><td colSpan={8} className="text-center py-8 text-slate-500">No inventory records.</td></tr>
           ) : (
             inventory.map((inv) => {
-              const isLow = inv.available < inv.itemType === 'Finished Good' ? 12 : 25;
+              const isLow = inv.available < (inv.itemType === 'Finished Good' ? 12 : 25);
               return (
                 <TableRow key={inv.inventoryId}>
                   <TableCell>

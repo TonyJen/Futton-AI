@@ -1,26 +1,28 @@
 import { render, screen } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
 import { StatusBadge } from './StatusBadge';
 
 describe('StatusBadge', () => {
-  it('renders proposed status correctly', () => {
-    render(<StatusBadge status="proposed" />);
-    expect(screen.getByText(/proposed/i)).toBeInTheDocument();
+  it('renders the provided status text', () => {
+    render(<StatusBadge status="Running" />);
+    expect(screen.getByText(/running/i)).toBeInTheDocument();
   });
 
-  it('renders executed status with success styling', () => {
-    render(<StatusBadge status="executed" />);
+  it('maps success statuses to the success badge style', () => {
+    render(<StatusBadge status="Executed" />);
     const badge = screen.getByText(/executed/i);
     expect(badge).toBeInTheDocument();
+    expect(badge).toHaveClass('badge-success');
   });
 
-  it('applies different styles for different statuses', () => {
-    const { rerender } = render(<StatusBadge status="proposed" />);
-    const proposed = screen.getByText(/proposed/i);
+  it('applies different styles for warning and danger statuses', () => {
+    const { rerender } = render(<StatusBadge status="Pending" />);
+    const pending = screen.getByText(/pending/i);
+    expect(pending).toHaveClass('badge-warning');
 
-    rerender(<StatusBadge status="executed" />);
-    const executed = screen.getByText(/executed/i);
+    rerender(<StatusBadge status="Low Stock" />);
+    const lowStock = screen.getByText(/low stock/i);
 
-    expect(proposed).not.toHaveClass('bg-green-500');
-    expect(executed).toHaveClass('bg-green-500');
+    expect(lowStock).toHaveClass('badge-danger');
   });
 });

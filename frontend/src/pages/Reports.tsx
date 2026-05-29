@@ -1,4 +1,3 @@
-import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getDashboardKpis, getInventoryDistribution, getProductionTrend, getWorkCenterUtilization, getQuotes, getReturns } from '@/lib/api';
 import { Header } from '@/components/layout/Header';

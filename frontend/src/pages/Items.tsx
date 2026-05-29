@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getItems, getItemBOM } from '@/lib/api';
 import { Header } from '@/components/layout/Header';

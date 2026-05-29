@@ -1,4 +1,3 @@
-import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, Package, Boxes, Factory, Bot, TrendingUp, Settings, FileText, RotateCcw, ShoppingCart, BarChart3

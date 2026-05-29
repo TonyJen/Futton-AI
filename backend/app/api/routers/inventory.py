@@ -51,13 +51,24 @@ async def list_inventory_transactions(
     itemId: Optional[int] = Query(None, alias="itemId"),
     limit: int = Query(50, le=200),
 ):
-    """Return recent inventory transactions (stub until full InventoryTransaction model + service is wired)."""
-    from app.db.models import InventoryTransaction as TxModel, Item as ItemModel
+    """Return recent inventory transactions aligned with the current ORM schema."""
+    from app.db.models import (
+        InventoryTransaction as TxModel,
+        Item as ItemModel,
+        TransactionType as TransactionTypeModel,
+        Warehouse as WarehouseModel,
+    )
     from sqlalchemy import select, desc
 
     stmt = (
-        select(TxModel, ItemModel)
+        select(TxModel, ItemModel, TransactionTypeModel, WarehouseModel)
         .join(ItemModel, TxModel.ItemID == ItemModel.ItemID, isouter=True)
+        .join(
+            TransactionTypeModel,
+            TxModel.TransactionTypeID == TransactionTypeModel.TransactionTypeID,
+            isouter=True,
+        )
+        .join(WarehouseModel, TxModel.WarehouseID == WarehouseModel.WarehouseID, isouter=True)
         .order_by(desc(TxModel.TransactionDate))
         .limit(limit)
     )
@@ -67,19 +78,20 @@ async def list_inventory_transactions(
     rows = (await db.execute(stmt)).all()
 
     result = []
-    for tx, item in rows:
+    for tx, item, transaction_type, warehouse in rows:
         result.append({
             "transactionId": tx.TransactionID,
             "itemId": tx.ItemID,
             "itemCode": getattr(item, "ItemCode", None),
             "itemName": getattr(item, "ItemName", None),
-            "transactionType": tx.TransactionType,
+            "warehouseName": getattr(warehouse, "WarehouseName", None),
+            "transactionType": getattr(transaction_type, "TypeName", None),
             "quantity": tx.Quantity,
-            "quantityBefore": tx.QuantityBefore,
-            "quantityAfter": tx.QuantityAfter,
+            "unitCost": tx.UnitCost,
             "referenceType": tx.ReferenceType,
-            "referenceId": tx.ReferenceID,
+            "referenceNumber": tx.ReferenceNumber,
             "transactionDate": tx.TransactionDate.isoformat() if tx.TransactionDate else None,
             "notes": tx.Notes,
+            "createdBy": tx.CreatedBy,
         })
     return result

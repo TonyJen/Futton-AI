@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import {
   ReactFlow,
   MiniMap,
@@ -8,12 +8,11 @@ import {
   useEdgesState,
   Node,
   Edge,
-  Position,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
 import { BOMComponent } from '@/lib/types';
-import { formatCurrency, formatNumber } from '@/lib/utils';
+import { formatNumber } from '@/lib/utils';
 
 interface BOMFlowProps {
   components: BOMComponent[];
@@ -77,7 +76,7 @@ export function BOMFlow({ components, rootItemName = 'Finished Good' }: BOMFlowP
   const [nodes, , onNodesChange] = useNodesState([rootNode, ...compNodes]);
   const [edgesState, , onEdgesChange] = useEdgesState(edges);
 
-  const onNodeClick = useCallback((event: any, node: any) => {
+  const onNodeClick = useCallback((_event: unknown, node: Node) => {
     if (node.id === 'root') {
       alert(`Root: ${rootItemName}\nTotal components: ${components.length}`);
     } else {

@@ -1,20 +1,26 @@
 import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 import { RecommendationCard } from './RecommendationCard';
+import type { AgentRecommendation } from '@/lib/types';
 
-const mockRecommendation = {
+const mockRecommendation: AgentRecommendation = {
   id: 1,
+  agentName: 'MRP Agent',
   title: 'Replenish Memory Foam',
   description: 'Stock is critically low',
-  confidence: 0.85,
+  impact: 'Avoids a line stoppage',
+  confidence: 85,
   estimatedSavings: 1240,
-  actionType: 'CREATE_PURCHASE_ORDER',
+  actionType: 'CREATE_PO',
+  status: 'PENDING',
+  createdAt: '2026-05-25T06:18:00Z',
 };
 
 describe('RecommendationCard', () => {
   it('renders recommendation details', () => {
     render(
       <RecommendationCard
-        recommendation={mockRecommendation}
+        rec={mockRecommendation}
         onApprove={() => {}}
         onReject={() => {}}
       />
@@ -28,7 +34,7 @@ describe('RecommendationCard', () => {
     const onApprove = vi.fn();
     render(
       <RecommendationCard
-        recommendation={mockRecommendation}
+        rec={mockRecommendation}
         onApprove={onApprove}
         onReject={() => {}}
       />
@@ -42,7 +48,7 @@ describe('RecommendationCard', () => {
     const onReject = vi.fn();
     render(
       <RecommendationCard
-        recommendation={mockRecommendation}
+        rec={mockRecommendation}
         onApprove={() => {}}
         onReject={onReject}
       />

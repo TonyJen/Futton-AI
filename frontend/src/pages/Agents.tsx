@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getAgents, getRecommendations, runAgent, approveRecommendation, rejectRecommendation, chatWithSupervisor } from '@/lib/api';
 import { Header } from '@/components/layout/Header';
@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Input } from '@/components/ui/Input';
-import { Modal } from '@/components/ui/Modal';
 import { Bot, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Agent, AgentRecommendation } from '@/lib/types';

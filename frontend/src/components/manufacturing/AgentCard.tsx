@@ -1,4 +1,3 @@
-import React from 'react';
 import { Agent } from '@/lib/types';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';

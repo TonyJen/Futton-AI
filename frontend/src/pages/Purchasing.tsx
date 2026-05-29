@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getSuppliers, getPurchaseOrders, getPurchaseOrder, createPurchaseOrder, receiveGoods, getItems } from '@/lib/api';
+import { getSuppliers, getPurchaseOrders, createPurchaseOrder, receiveGoods, getItems } from '@/lib/api';
 import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/Button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table';
@@ -30,7 +30,7 @@ export default function Purchasing() {
   });
 
   const { data: suppliers = [] } = useQuery({ queryKey: ['suppliers'], queryFn: getSuppliers });
-  const { data: items = [] } = useQuery({ queryKey: ['items'], queryFn: getItems });
+  const { data: items = [] } = useQuery({ queryKey: ['items'], queryFn: () => getItems() });
 
   const createMutation = useMutation({
     mutationFn: createPurchaseOrder,
@@ -223,8 +223,6 @@ export default function Purchasing() {
                   </TableHeader>
                   <TableBody>
                     {(selectedPO.details || []).map((d: any, i: number) => {
-                      const pid = d.poDetailId || d.PODetailID;
-                      const remaining = (d.quantity || 0) - (d.quantityReceived || 0);
                       return (
                         <TableRow key={i}>
                           <TableCell>{d.itemName || d.itemCode}</TableCell>

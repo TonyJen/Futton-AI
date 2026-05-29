@@ -1,10 +1,16 @@
 import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 import { AgentCard } from './AgentCard';
+import type { Agent } from '@/lib/types';
 
-const mockAgent = {
+const mockAgent: Agent = {
+  id: 1,
   name: 'MRP Agent',
   description: 'Plans material requirements',
-  status: 'production' as const,
+  category: 'Planning',
+  lastRun: '2026-05-25T06:15:00Z',
+  status: 'Completed',
+  recommendationsGenerated: 4,
 };
 
 describe('AgentCard', () => {
@@ -19,11 +25,11 @@ describe('AgentCard', () => {
     render(<AgentCard agent={mockAgent} onRun={onRun} />);
     
     fireEvent.click(screen.getByRole('button', { name: /run/i }));
-    expect(onRun).toHaveBeenCalledWith('MRP Agent');
+    expect(onRun).toHaveBeenCalledWith(1);
   });
 
-  it('shows production badge for production agents', () => {
+  it('shows the agent category badge', () => {
     render(<AgentCard agent={mockAgent} onRun={() => {}} />);
-    expect(screen.getByText('production')).toBeInTheDocument();
+    expect(screen.getByText('Planning')).toBeInTheDocument();
   });
 });

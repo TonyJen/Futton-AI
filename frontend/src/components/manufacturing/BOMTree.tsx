@@ -1,4 +1,3 @@
-import React from 'react';
 import { BOMComponent } from '@/lib/types';
 import { formatNumber } from '@/lib/utils';
 import { ChevronRight } from 'lucide-react';

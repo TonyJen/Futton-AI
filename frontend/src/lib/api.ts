@@ -12,7 +12,8 @@
 import axios from 'axios';
 import {
   Item, InventoryRecord, InventoryTransaction, ProductionOrder,
-  WorkCenter, Agent, AgentRecommendation, KpiData
+  WorkCenter, Agent, AgentRecommendation, KpiData,
+  InventoryDistributionEntry, ProductionTrendEntry, WorkCenterUtilizationEntry,
 } from './types';
 
 import * as mock from './mockData';
@@ -229,30 +230,30 @@ export async function getDashboardKpis(): Promise<KpiData> {
   return res.data;
 }
 
-export async function getInventoryDistribution() {
+export async function getInventoryDistribution(): Promise<InventoryDistributionEntry[]> {
   if (USE_MOCK) {
     await delay(190);
     return mock.CHART_INVENTORY_BY_TYPE;
   }
-  const res = await api.get('/dashboard/inventory-distribution');
+  const res = await api.get<InventoryDistributionEntry[]>('/dashboard/inventory-distribution');
   return res.data;
 }
 
-export async function getProductionTrend() {
+export async function getProductionTrend(): Promise<ProductionTrendEntry[]> {
   if (USE_MOCK) {
     await delay(150);
     return mock.CHART_PRODUCTION_TREND;
   }
-  const res = await api.get('/dashboard/production-trend');
+  const res = await api.get<ProductionTrendEntry[]>('/dashboard/production-trend');
   return res.data;
 }
 
-export async function getWorkCenterUtilization() {
+export async function getWorkCenterUtilization(): Promise<WorkCenterUtilizationEntry[]> {
   if (USE_MOCK) {
     await delay(140);
     return mock.CHART_WORKCENTER_UTIL;
   }
-  const res = await api.get('/dashboard/workcenter-utilization');
+  const res = await api.get<WorkCenterUtilizationEntry[]>('/dashboard/workcenter-utilization');
   return res.data;
 }
 

@@ -148,6 +148,8 @@ async def run_agent(
             conversation_id=result.get("conversation_id"),
             reasoning_trace=result.get("reasoning_trace", []),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(500, f"Agent execution error: {str(e)}")
 
@@ -205,6 +207,9 @@ async def approve_action_endpoint(
             message="Action approved and executed successfully",
             execution_details=exec_result,
         )
+    except HTTPException:
+        await db.rollback()
+        raise
     except Exception as e:
         await db.rollback()
         import traceback

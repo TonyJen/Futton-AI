@@ -7,12 +7,6 @@ These tests cover the public interface that the frontend AI Hub uses.
 import pytest
 from httpx import AsyncClient
 
-# These tests require the full app to load cleanly.
-# Due to some legacy import mixing between backend versions, they are skipped for now.
-# They can be enabled once the circular import issues in app startup are fully resolved.
-pytestmark = pytest.mark.skip(reason="Router tests temporarily disabled due to app import issues in test environment")
-
-
 @pytest.mark.asyncio
 class TestAgentsRouter:
     async def test_available_agents(self, client: AsyncClient):
@@ -82,6 +76,4 @@ class TestAgentsRouter:
                 f"/api/v1/agents/actions/{action_id}/approve",
                 json={"approved_by": "test-reviewer"}
             )
-            # Current implementation doesn't prevent double approve perfectly,
-            # but at minimum it shouldn't 500
-            assert approve_again.status_code in (200, 400, 500)
+            assert approve_again.status_code == 400
