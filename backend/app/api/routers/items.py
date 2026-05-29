@@ -6,6 +6,7 @@ Endpoints:
 - GET /items/{item_id}/bom (full recursive explosion)
 """
 
+import logging
 from typing import List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
@@ -16,6 +17,8 @@ from app.core.dependencies import DBSessionDep
 from app.db.models import Item as ItemModel
 from app.schemas.bom import BOMExplosionResult
 from app.services.bom_service import get_full_bom_explosion
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/items", tags=["Items & BOM"])
 
@@ -54,21 +57,25 @@ async def list_items(
 
     shaped = []
     for item in rows:
-        itype = item.item_type
-        shaped.append({
-            "itemId": item.ItemID,
-            "itemCode": item.ItemCode,
-            "itemName": item.ItemName,
-            "itemType": (itype.TypeCode if itype else "Unknown"),
-            "unit": "",  # can be enriched later if Unit relationship is loaded
-            "description": item.Description,
-            "standardCost": float(item.StandardCost or 0),
-            "listPrice": float(item.ListPrice or 0),
-            "isActive": item.IsActive,
-            "leadTimeDays": item.LeadTimeDays or 0,
-            "reorderPoint": float(item.ReorderPoint or 0),
-            "safetyStock": float(item.SafetyStock or 0),
-        })
+        try:
+            itype = item.item_type
+            shaped.append({
+                "itemId": item.ItemID,
+                "itemCode": item.ItemCode,
+                "itemName": item.ItemName,
+                "itemType": (itype.TypeCode if itype else "Unknown"),
+                "unit": "",
+                "description": item.Description,
+                "standardCost": float(item.StandardCost or 0),
+                "listPrice": float(item.ListPrice or 0),
+                "isActive": item.IsActive,
+                "leadTimeDays": item.LeadTimeDays or 0,
+                "reorderPoint": float(item.ReorderPoint or 0),
+                "safetyStock": float(item.SafetyStock or 0),
+            })
+        except Exception as item_err:
+            # Skip bad rows instead of crashing the whole list
+            logger.warning(f"Skipping item {getattr(item, 'ItemID', 'unknown')}: {item_err}")
     return shaped
 
 

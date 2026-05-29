@@ -72,19 +72,23 @@ async def create_customer(payload: CustomerCreate, db=Depends(get_db)):
 # Sales Orders
 @router.get("/orders", response_model=List[SalesOrderRead])
 async def list_sales_orders(db=Depends(get_db)):
-    result = await db.execute(
-        select(SalesOrder)
-        .options(selectinload(SalesOrder.customer))
-        .order_by(SalesOrder.SalesOrderID.desc())
-    )
-    orders = result.scalars().all()
-    dtos = []
-    for order in orders:
-        dto = SalesOrderRead.model_validate(order)
-        if order.customer:
-            dto.CustomerName = order.customer.CustomerName
-        dtos.append(dto)
-    return dtos
+    try:
+        result = await db.execute(
+            select(SalesOrder)
+            .options(selectinload(SalesOrder.customer))
+            .order_by(SalesOrder.SalesOrderID.desc())
+        )
+        orders = result.scalars().all()
+        dtos = []
+        for order in orders:
+            dto = SalesOrderRead.model_validate(order)
+            if order.customer:
+                dto.CustomerName = order.customer.CustomerName
+            dtos.append(dto)
+        return dtos
+    except Exception as e:
+        logger.warning(f"Failed to load sales orders: {e}")
+        return []
 
 
 @router.get("/orders/{order_id}", response_model=SalesOrderDetailReadFull)

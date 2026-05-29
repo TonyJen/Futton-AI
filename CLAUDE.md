@@ -72,6 +72,7 @@ npm run dev
 - Frontend lint passes: `cd frontend && npm run lint`
 - Frontend build passes: `cd frontend && npm run build`
 - Frontend tests pass: `cd frontend && npm run test -- --run`
+- Frontend coverage passes: `cd frontend && npm run test:coverage`
 
 ## Testing
 
@@ -79,6 +80,26 @@ npm run dev
 - Backend package tests from `backend\`: `python -m pytest tests -q`
 - Standalone backend agent tests from `backend\`: `python -m pytest test_agent.py -q`
 - Frontend tests: `cd frontend && npm run test -- --run`
+- Frontend coverage: `cd frontend && npm run test:coverage`
+- Backend perf smoke: `.\.venv\Scripts\python.exe backend\scripts\perf_smoke.py --base-url http://127.0.0.1:8000`
+
+## Runtime Configuration
+
+### Backend
+
+- `APP_ENV` controls environment labeling (`development`, `staging`, `production`)
+- `DEBUG` defaults to `false`; set it explicitly per environment
+- `SQL_ECHO` controls SQLAlchemy SQL logging independently of `DEBUG`
+- `QUERY_TIMING_ENABLED` enables slow-query timing instrumentation
+- `SLOW_QUERY_THRESHOLD_MS` controls the slow-query warning threshold
+
+### Frontend
+
+- `VITE_APP_ENV` labels the frontend runtime environment
+- `VITE_API_BASE_URL` overrides the API base URL when needed
+- `VITE_RUNTIME_MONITORING_URL` enables posting runtime events to an external endpoint
+- `VITE_SLOW_API_THRESHOLD_MS` controls slow-request reporting
+- `VITE_RUNTIME_LOGGING` enables console logging for runtime monitoring during development
 
 ## Lint Setup
 
@@ -127,4 +148,5 @@ npm run dev
 
 - Pydantic v2 `Config` deprecation warnings in backend schemas
 - One `datetime.utcnow()` deprecation warning in the agents router
+- One `datetime.utcnow()` deprecation warning in dashboard and sales summary code paths
 - Vite/Vitest plugin deprecation warnings during frontend test runs

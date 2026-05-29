@@ -9,9 +9,11 @@ import { Modal } from '@/components/ui/Modal';
 import { BOMTree } from '@/components/manufacturing/BOMTree';
 import { BOMFlow } from '@/components/manufacturing/BOMFlow';
 import { Badge } from '@/components/ui/Badge';
+import { PageErrorState, PageLoadingState } from '@/components/app/PageState';
 import { formatCurrency } from '@/lib/utils';
 import { Search, Eye } from 'lucide-react';
 import type { Item, BOMComponent } from '@/lib/types';
+import { toast } from 'sonner';
 
 export default function Items() {
   const [search, setSearch] = useState('');
@@ -20,19 +22,32 @@ export default function Items() {
   const [bomData, setBomData] = useState<BOMComponent[]>([]);
   const [isBomOpen, setIsBomOpen] = useState(false);
 
-  const { data: items = [], isLoading } = useQuery({
+  const itemsQuery = useQuery({
     queryKey: ['items', search, typeFilter],
     queryFn: () => getItems({ search, type: typeFilter }),
   });
+  const items = itemsQuery.data ?? [];
 
   const openBOM = async (item: Item) => {
     setSelectedItem(item);
-    const bom = await getItemBOM(item.itemId);
-    setBomData(bom);
-    setIsBomOpen(true);
+    try {
+      const bom = await getItemBOM(item.itemId);
+      setBomData(bom);
+      setIsBomOpen(true);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to load the BOM');
+    }
   };
 
   const itemTypes = ['All', 'Raw Material', 'Component', 'Finished Good', 'Packaging'];
+
+  if (itemsQuery.isLoading) {
+    return <PageLoadingState title="Loading item master" description="Fetching items and BOM metadata." />;
+  }
+
+  if (itemsQuery.isError) {
+    return <PageErrorState title="Item master is unavailable" onRetry={() => itemsQuery.refetch()} />;
+  }
 
   return (
     <div>
@@ -79,9 +94,7 @@ export default function Items() {
           </tr>
         </TableHeader>
         <TableBody>
-          {isLoading ? (
-            <tr><TableCell colSpan={8} className="text-center py-10 text-slate-400">Loading items...</TableCell></tr>
-          ) : items.length === 0 ? (
+          {items.length === 0 ? (
             <tr><TableCell colSpan={8} className="text-center py-10 text-slate-500">No items found.</TableCell></tr>
           ) : (
             items.map(item => (

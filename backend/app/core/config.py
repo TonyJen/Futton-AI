@@ -4,7 +4,7 @@ Uses Pydantic v2 Settings for environment-driven configuration.
 """
 
 from functools import lru_cache
-from typing import List
+from typing import List, Literal
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -29,13 +29,26 @@ class Settings(BaseSettings):
     APP_VERSION: str = "0.2.0"
     API_V1_PREFIX: str = "/api/v1"
     API_V1_STR: str = "/api/v1"
-    DEBUG: bool = Field(default=True, description="Enable debug mode / detailed errors")
+    APP_ENV: Literal["development", "test", "production"] = Field(
+        default="development",
+        description="Runtime environment name used for operational defaults",
+    )
+    DEBUG: bool = Field(default=False, description="Enable debug mode / detailed errors")
+    SQL_ECHO: bool = Field(default=False, description="Enable SQLAlchemy SQL echo logging")
+    QUERY_TIMING_ENABLED: bool = Field(
+        default=False,
+        description="Log queries that exceed the slow query threshold",
+    )
+    SLOW_QUERY_THRESHOLD_MS: int = Field(
+        default=250,
+        description="Warn when a DB query exceeds this threshold in milliseconds",
+    )
 
     # Database - SQLite with async driver (aiosqlite)
     # Default points to the consolidated data file created by DB agent
     DATABASE_URL: str = Field(
         default="sqlite+aiosqlite:///./data/futon_manufacturing.db",
-        description="SQLAlchemy database URL (async SQLite recommended for dev)",
+        description="SQLAlchemy database URL (SQLite is suitable for dev/demo only)",
     )
     # For Alembic (often uses sync driver)
     ALEMBIC_DATABASE_URL: str = Field(

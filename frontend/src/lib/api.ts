@@ -1,34 +1,89 @@
-/**
- * Funton AI - Typed API Client
- * 
- * Ready for FastAPI backend.
- * Currently backed by high-fidelity mocks with network simulation.
- * 
- * When backend is ready:
- *   1. Set VITE_API_URL in .env
- *   2. Replace mock implementations with axios/fetch calls
- *   3. Keep the same public interface
- */
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import {
   Item, InventoryRecord, InventoryTransaction, ProductionOrder,
   WorkCenter, Agent, AgentRecommendation, KpiData,
   InventoryDistributionEntry, ProductionTrendEntry, WorkCenterUtilizationEntry,
 } from './types';
 
+import { appConfig } from './config';
 import * as mock from './mockData';
+import { reportApiTiming, reportRuntimeError } from './runtime-monitoring';
 
 // ============================================
 // Configuration
 // ============================================
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 const USE_MOCK = false; // Set to true only if you want to run completely offline (no real LLM)
 
 const api = axios.create({
-  baseURL: API_BASE,
+  baseURL: appConfig.apiBaseUrl,
   timeout: 15000,
   headers: { 'Content-Type': 'application/json' },
 });
+
+export class ApiClientError extends Error {
+  statusCode?: number;
+  response?: AxiosError['response'];
+  details?: unknown;
+
+  constructor(message: string, statusCode?: number, details?: unknown, response?: AxiosError['response']) {
+    super(message);
+    this.name = 'ApiClientError';
+    this.statusCode = statusCode;
+    this.details = details;
+    this.response = response;
+  }
+}
+
+api.interceptors.request.use((config) => {
+  (config as typeof config & { metadata?: { startedAt: number } }).metadata = {
+    startedAt: performance.now(),
+  };
+  return config;
+});
+
+api.interceptors.response.use(
+  (response) => {
+    const startedAt = (response.config as typeof response.config & {
+      metadata?: { startedAt: number };
+    }).metadata?.startedAt;
+    if (typeof startedAt === 'number') {
+      reportApiTiming(
+        response.config.method ?? 'get',
+        response.config.url ?? '',
+        performance.now() - startedAt,
+        response.status
+      );
+    }
+    return response;
+  },
+  (error: AxiosError<any>) => {
+    const startedAt = (error.config as (typeof error.config & {
+      metadata?: { startedAt: number };
+    }) | undefined)?.metadata?.startedAt;
+    if (typeof startedAt === 'number') {
+      reportApiTiming(
+        error.config?.method ?? 'get',
+        error.config?.url ?? '',
+        performance.now() - startedAt,
+        error.response?.status
+      );
+    }
+
+    const message =
+      error.response?.data?.detail ||
+      error.message ||
+      'The server returned an unexpected response.';
+
+    const wrapped = new ApiClientError(message, error.response?.status, error.response?.data, error.response);
+    reportRuntimeError(wrapped, {
+      method: error.config?.method,
+      url: error.config?.url,
+      statusCode: error.response?.status,
+    });
+
+    return Promise.reject(wrapped);
+  }
+);
 
 function pick<T>(value: T | undefined, fallback: T | undefined): T | undefined {
   return value ?? fallback;
@@ -678,4 +733,4 @@ export function isUsingMockData(): boolean {
   return USE_MOCK;
 }
 
-export const apiBaseUrl = API_BASE;
+export const apiBaseUrl = appConfig.apiBaseUrl;

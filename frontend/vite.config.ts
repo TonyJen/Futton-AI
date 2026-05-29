@@ -17,4 +17,17 @@ export default defineConfig({
   preview: {
     port: 5173,
   },
+  build: {
+    chunkSizeWarningLimit: 700,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'query-vendor': ['@tanstack/react-query', 'axios', 'zod'],
+          'chart-vendor': ['recharts'],
+          'flow-vendor': ['@xyflow/react'],
+        },
+      },
+    },
+  },
 });

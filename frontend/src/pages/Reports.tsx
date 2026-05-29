@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { getDashboardKpis, getInventoryDistribution, getProductionTrend, getWorkCenterUtilization, getQuotes, getReturns } from '@/lib/api';
 import { Header } from '@/components/layout/Header';
+import { PageErrorState, PageLoadingState } from '@/components/app/PageState';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table';
@@ -10,15 +11,56 @@ import { toast } from 'sonner';
 import { Download, BarChart3 } from 'lucide-react';
 
 export default function Reports() {
-  const { data: kpis } = useQuery({ queryKey: ['kpis'], queryFn: getDashboardKpis });
-  const { data: invDist = [] } = useQuery({ queryKey: ['inv-dist'], queryFn: getInventoryDistribution });
-  const { data: prodTrend = [] } = useQuery({ queryKey: ['prod-trend'], queryFn: getProductionTrend });
-  const { data: wcUtil = [] } = useQuery({ queryKey: ['wc-util'], queryFn: getWorkCenterUtilization });
-  const { data: quotes = [] } = useQuery({ queryKey: ['quotes'], queryFn: getQuotes });
-  const { data: returns = [] } = useQuery({ queryKey: ['returns'], queryFn: getReturns });
+  const kpisQuery = useQuery({ queryKey: ['kpis'], queryFn: getDashboardKpis });
+  const invDistQuery = useQuery({ queryKey: ['inv-dist'], queryFn: getInventoryDistribution });
+  const prodTrendQuery = useQuery({ queryKey: ['prod-trend'], queryFn: getProductionTrend });
+  const wcUtilQuery = useQuery({ queryKey: ['wc-util'], queryFn: getWorkCenterUtilization });
+  const quotesQuery = useQuery({ queryKey: ['quotes'], queryFn: getQuotes });
+  const returnsQuery = useQuery({ queryKey: ['returns'], queryFn: getReturns });
+
+  const kpis = kpisQuery.data;
+  const invDist = invDistQuery.data ?? [];
+  const prodTrend = prodTrendQuery.data ?? [];
+  const wcUtil = wcUtilQuery.data ?? [];
+  const quotes = quotesQuery.data ?? [];
+  const returns = returnsQuery.data ?? [];
 
   const convertedQuotes = quotes.filter((q: any) => q.convertedToOrderId).length;
   const conversionRate = quotes.length ? Math.round((convertedQuotes / quotes.length) * 100) : 0;
+
+  if (
+    kpisQuery.isLoading ||
+    invDistQuery.isLoading ||
+    prodTrendQuery.isLoading ||
+    wcUtilQuery.isLoading ||
+    quotesQuery.isLoading ||
+    returnsQuery.isLoading
+  ) {
+    return <PageLoadingState title="Loading reports" description="Pulling live manufacturing and sales analytics." />;
+  }
+
+  if (
+    kpisQuery.isError ||
+    invDistQuery.isError ||
+    prodTrendQuery.isError ||
+    wcUtilQuery.isError ||
+    quotesQuery.isError ||
+    returnsQuery.isError
+  ) {
+    return (
+      <PageErrorState
+        title="Reporting data is unavailable"
+        onRetry={() => {
+          void kpisQuery.refetch();
+          void invDistQuery.refetch();
+          void prodTrendQuery.refetch();
+          void wcUtilQuery.refetch();
+          void quotesQuery.refetch();
+          void returnsQuery.refetch();
+        }}
+      />
+    );
+  }
 
   function exportCSV(name: string, rows: any[]) {
     if (!rows.length) {

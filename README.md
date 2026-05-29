@@ -181,6 +181,28 @@ docker compose --env-file backend/.env up --build
 
 The backend container uses `backend/data/futon_manufacturing.db`, and it seeds that location automatically if the file is missing.
 
+### Production-Oriented Config
+
+Backend defaults are now environment-aware. The main knobs are:
+
+```env
+APP_ENV=development
+DEBUG=false
+SQL_ECHO=false
+QUERY_TIMING_ENABLED=false
+SLOW_QUERY_THRESHOLD_MS=250
+```
+
+Frontend runtime config is driven by Vite env vars:
+
+```env
+VITE_APP_ENV=development
+VITE_API_BASE_URL=http://localhost:8000/api/v1
+VITE_RUNTIME_MONITORING_URL=
+VITE_SLOW_API_THRESHOLD_MS=800
+VITE_RUNTIME_LOGGING=false
+```
+
 ### Manual Setup
 
 #### 1. Backend
@@ -246,6 +268,32 @@ Run the project linters from the repository root:
 cd frontend
 npm run lint
 ```
+
+---
+
+## Testing and Validation
+
+Run the main validation commands from the repository root:
+
+```powershell
+# Backend tests with coverage threshold
+.\.venv\Scripts\python.exe -m pytest backend -q
+
+# Frontend tests
+cd frontend
+npm run test -- --run
+npm run test:coverage
+npm run lint
+npm run build
+```
+
+For a lightweight backend latency smoke check, start the backend and run:
+
+```powershell
+.\.venv\Scripts\python.exe backend\scripts\perf_smoke.py --base-url http://127.0.0.1:8000
+```
+
+The backend test suite enforces coverage in `app/api`, `app/services`, and `app/core`, and the frontend coverage run enforces thresholds for the new operability/runtime surface.
 
 ---
 

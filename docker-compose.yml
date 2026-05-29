@@ -4,9 +4,13 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     environment:
+      APP_ENV: ${APP_ENV:-production}
       DATABASE_URL: sqlite+aiosqlite:////app/backend/data/futon_manufacturing.db
       ALEMBIC_DATABASE_URL: sqlite:////app/backend/data/futon_manufacturing.db
-      DEBUG: ${DEBUG:-true}
+      DEBUG: ${DEBUG:-false}
+      SQL_ECHO: ${SQL_ECHO:-false}
+      QUERY_TIMING_ENABLED: ${QUERY_TIMING_ENABLED:-false}
+      SLOW_QUERY_THRESHOLD_MS: ${SLOW_QUERY_THRESHOLD_MS:-250}
       DEFAULT_LLM_PROVIDER: ${DEFAULT_LLM_PROVIDER:-xai}
       XAI_API_KEY: ${XAI_API_KEY:-}
       GROQ_API_KEY: ${GROQ_API_KEY:-}
@@ -35,6 +39,7 @@ services:
       dockerfile: frontend/Dockerfile
       args:
         VITE_API_URL: /api/v1
+        VITE_APP_ENV: production
     depends_on:
       backend:
         condition: service_healthy

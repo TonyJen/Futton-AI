@@ -7,21 +7,40 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { StatusBadge } from '@/components/manufacturing/StatusBadge';
 import { Progress } from '@/components/ui/Progress';
+import { PageErrorState, PageLoadingState } from '@/components/app/PageState';
 import { formatDate } from '@/lib/utils';
 import { Play, AlertCircle } from 'lucide-react';
 import type { ProductionOrder, WorkCenter } from '@/lib/types';
 import { toast } from 'sonner';
 
 export default function Production() {
-  const { data: orders = [], isLoading } = useQuery({
+  const ordersQuery = useQuery({
     queryKey: ['production-orders'],
     queryFn: () => getProductionOrders(),
   });
+  const orders = ordersQuery.data ?? [];
 
-  const { data: workCenters = [] } = useQuery({
+  const workCentersQuery = useQuery({
     queryKey: ['workcenters'],
     queryFn: getWorkCenters,
   });
+  const workCenters = workCentersQuery.data ?? [];
+
+  if (ordersQuery.isLoading || workCentersQuery.isLoading) {
+    return <PageLoadingState title="Loading production command center" description="Fetching work centers and active work orders." />;
+  }
+
+  if (ordersQuery.isError || workCentersQuery.isError) {
+    return (
+      <PageErrorState
+        title="Production data is unavailable"
+        onRetry={() => {
+          void ordersQuery.refetch();
+          void workCentersQuery.refetch();
+        }}
+      />
+    );
+  }
 
   const handleAction = (order: ProductionOrder, action: string) => {
     toast.success(`${action} triggered`, {
@@ -76,9 +95,7 @@ export default function Production() {
           </tr>
         </TableHeader>
         <TableBody>
-          {isLoading ? (
-            <tr><td colSpan={9} className="text-center py-9">Loading production orders...</td></tr>
-          ) : orders.length === 0 ? (
+          {orders.length === 0 ? (
             <tr><td colSpan={9} className="text-center py-9 text-slate-500">No active orders</td></tr>
           ) : (
             orders.map((order: ProductionOrder) => {

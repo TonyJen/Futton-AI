@@ -1,12 +1,14 @@
 from app.api.routers.purchasing import get_supplier_pricing
 from app.db.models import Item, ItemType, Supplier, SupplierItem, UnitOfMeasure
+from uuid import uuid4
 
 
 class TestPurchasingRouter:
     async def test_supplier_items_returns_item_metadata(self, db_session):
-        supplier = Supplier(SupplierCode="SUP-TEST", SupplierName="Test Supplier", IsActive=True)
-        item_type = ItemType(TypeCode="RAW", TypeName="Raw Material")
-        unit = UnitOfMeasure(UnitCode="EA", UnitName="Each")
+        suffix = uuid4().hex[:6].upper()
+        supplier = Supplier(SupplierCode=f"SUP-{suffix}", SupplierName="Test Supplier", IsActive=True)
+        item_type = ItemType(TypeCode=f"RAW{suffix}", TypeName="Raw Material")
+        unit = UnitOfMeasure(UnitCode=f"EA{suffix}", UnitName="Each")
         db_session.add_all([supplier, item_type, unit])
         await db_session.flush()
 

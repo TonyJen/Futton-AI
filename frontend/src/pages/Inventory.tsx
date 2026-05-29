@@ -9,8 +9,10 @@ import { Badge } from '@/components/ui/Badge';
 import { Tabs } from '@/components/ui/Tabs';
 import { StatusBadge } from '@/components/manufacturing/StatusBadge';
 import { formatDateTime, formatNumber } from '@/lib/utils';
+import { PageErrorState, PageLoadingState } from '@/components/app/PageState';
 import { AlertTriangle, ArrowRight } from 'lucide-react';
 import type { InventoryRecord, InventoryTransaction } from '@/lib/types';
+import { toast } from 'sonner';
 
 const WAREHOUSES = ['All', 'Main Plant', 'East Warehouse', 'West Distribution', 'Finished Goods'];
 
@@ -20,19 +22,32 @@ export default function Inventory() {
   const [txns, setTxns] = useState<InventoryTransaction[]>([]);
   const [isTxnOpen, setIsTxnOpen] = useState(false);
 
-  const { data: inventory = [], isLoading } = useQuery({
+  const inventoryQuery = useQuery({
     queryKey: ['inventory', activeWarehouse],
     queryFn: () => getInventory(activeWarehouse === 'All' ? undefined : activeWarehouse),
   });
+  const inventory = inventoryQuery.data ?? [];
 
   const openTransactions = async (item: InventoryRecord) => {
     setSelectedItem(item);
-    const data = await getInventoryTransactions(item.itemId);
-    setTxns(data);
-    setIsTxnOpen(true);
+    try {
+      const data = await getInventoryTransactions(item.itemId);
+      setTxns(data);
+      setIsTxnOpen(true);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to load transaction history');
+    }
   };
 
   const lowStock = inventory.filter(i => i.available < 15);
+
+  if (inventoryQuery.isLoading) {
+    return <PageLoadingState title="Loading inventory" description="Fetching warehouse balances and stock availability." />;
+  }
+
+  if (inventoryQuery.isError) {
+    return <PageErrorState title="Inventory data is unavailable" onRetry={() => inventoryQuery.refetch()} />;
+  }
 
   return (
     <div>
@@ -70,9 +85,7 @@ export default function Inventory() {
           </tr>
         </TableHeader>
         <TableBody>
-          {isLoading ? (
-            <tr><td colSpan={8} className="text-center py-8">Loading inventory...</td></tr>
-          ) : inventory.length === 0 ? (
+          {inventory.length === 0 ? (
             <tr><td colSpan={8} className="text-center py-8 text-slate-500">No inventory records.</td></tr>
           ) : (
             inventory.map((inv) => {

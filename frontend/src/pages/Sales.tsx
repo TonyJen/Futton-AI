@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/Card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table';
 import { Badge } from '@/components/ui/Badge';
 import { Tabs } from '@/components/ui/Tabs';
+import { PageErrorState, PageLoadingState } from '@/components/app/PageState';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { Plus } from 'lucide-react';
@@ -13,27 +14,49 @@ import { Plus } from 'lucide-react';
 export default function Sales() {
   const [activeTab, setActiveTab] = useState<'orders' | 'quotes'>('orders');
 
-  const { data: summary } = useQuery({
+  const summaryQuery = useQuery({
     queryKey: ['sales-summary'],
     queryFn: getSalesSummary,
   });
+  const summary = summaryQuery.data;
 
-  const { data: quotes = [] } = useQuery({
+  const quotesQuery = useQuery({
     queryKey: ['quotes'],
     queryFn: getQuotes,
   });
+  const quotes = quotesQuery.data ?? [];
 
-  const { data: orders = [] } = useQuery({
+  const ordersQuery = useQuery({
     queryKey: ['sales-orders'],
     queryFn: getSalesOrders,
   });
+  const orders = ordersQuery.data ?? [];
 
-  const { data: reps = [] } = useQuery({
+  const repsQuery = useQuery({
     queryKey: ['sales-reps'],
     queryFn: getSalesReps,
   });
+  const reps = repsQuery.data ?? [];
 
   const openQuotes = quotes.filter((q: any) => q.status !== 'Accepted' && q.status !== 'Declined');
+
+  if (summaryQuery.isLoading || quotesQuery.isLoading || ordersQuery.isLoading || repsQuery.isLoading) {
+    return <PageLoadingState title="Loading sales operations" description="Fetching revenue, pipeline, and sales team data." />;
+  }
+
+  if (summaryQuery.isError || quotesQuery.isError || ordersQuery.isError || repsQuery.isError) {
+    return (
+      <PageErrorState
+        title="Sales data is unavailable"
+        onRetry={() => {
+          void summaryQuery.refetch();
+          void quotesQuery.refetch();
+          void ordersQuery.refetch();
+          void repsQuery.refetch();
+        }}
+      />
+    );
+  }
 
   return (
     <div>

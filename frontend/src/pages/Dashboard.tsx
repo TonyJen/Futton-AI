@@ -7,6 +7,7 @@ import {
 import { Header } from '@/components/layout/Header';
 import { KpiCard } from '@/components/manufacturing/KpiCard';
 import { RecommendationCard } from '@/components/manufacturing/RecommendationCard';
+import { PageErrorState, PageLoadingState } from '@/components/app/PageState';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -21,30 +22,35 @@ export default function Dashboard() {
   const queryClient = useQueryClient();
   const [processingId, setProcessingId] = useState<number | null>(null);
 
-  const { data: kpis } = useQuery({
+  const kpisQuery = useQuery({
     queryKey: ['dashboard-kpis'],
     queryFn: getDashboardKpis,
   });
+  const kpis = kpisQuery.data;
 
-  const { data: inventoryDist = [] } = useQuery({
+  const inventoryDistQuery = useQuery({
     queryKey: ['inventory-dist'],
     queryFn: getInventoryDistribution,
   });
+  const inventoryDist = inventoryDistQuery.data ?? [];
 
-  const { data: productionTrend = [] } = useQuery({
+  const productionTrendQuery = useQuery({
     queryKey: ['production-trend'],
     queryFn: getProductionTrend,
   });
+  const productionTrend = productionTrendQuery.data ?? [];
 
-  const { data: workCenters = [] } = useQuery({
+  const workCentersQuery = useQuery({
     queryKey: ['workcenter-util'],
     queryFn: getWorkCenterUtilization,
   });
+  const workCenters = workCentersQuery.data ?? [];
 
-  const { data: recommendations = [] } = useQuery({
+  const recommendationsQuery = useQuery({
     queryKey: ['recommendations'],
     queryFn: () => getRecommendations(),
   });
+  const recommendations = recommendationsQuery.data ?? [];
 
   const pendingRecs = recommendations.filter(r => r.status === 'PENDING' || r.status === 'PROPOSED');
 
@@ -71,6 +77,37 @@ export default function Dashboard() {
     },
     onSettled: () => setProcessingId(null),
   });
+
+  if (
+    kpisQuery.isLoading ||
+    inventoryDistQuery.isLoading ||
+    productionTrendQuery.isLoading ||
+    workCentersQuery.isLoading ||
+    recommendationsQuery.isLoading
+  ) {
+    return <PageLoadingState title="Loading executive dashboard" description="Refreshing KPIs, recommendations, and operational charts." />;
+  }
+
+  if (
+    kpisQuery.isError ||
+    inventoryDistQuery.isError ||
+    productionTrendQuery.isError ||
+    workCentersQuery.isError ||
+    recommendationsQuery.isError
+  ) {
+    return (
+      <PageErrorState
+        title="Dashboard data is unavailable"
+        onRetry={() => {
+          void kpisQuery.refetch();
+          void inventoryDistQuery.refetch();
+          void productionTrendQuery.refetch();
+          void workCentersQuery.refetch();
+          void recommendationsQuery.refetch();
+        }}
+      />
+    );
+  }
 
   const handleApprove = (id: number) => approveMutation.mutate(id);
   const handleReject = (id: number) => rejectMutation.mutate(id);

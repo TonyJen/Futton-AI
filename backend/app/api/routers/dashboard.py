@@ -5,7 +5,7 @@ Provides aggregated data for the main Dashboard and Reports pages.
 These endpoints were previously missing, causing 404s.
 """
 
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from typing import Any, Dict, List
 
 from fastapi import APIRouter
@@ -76,9 +76,19 @@ async def get_inventory_distribution(db: DBSessionDep) -> List[Dict[str, Any]]:
 
     # Simple mapping (in real system we'd join ItemType)
     type_names = {1: "Raw Material", 2: "Component", 3: "Finished Good", 4: "Packaging"}
+    type_colors = {
+        1: "#0f766e",
+        2: "#2563eb",
+        3: "#7c3aed",
+        4: "#f59e0b",
+    }
     
     return [
-        {"name": type_names.get(row[0], f"Type {row[0]}"), "value": row[1]}
+        {
+            "name": type_names.get(row[0], f"Type {row[0]}"),
+            "value": row[1],
+            "fill": type_colors.get(row[0], "#94a3b8"),
+        }
         for row in rows
     ]
 
@@ -86,25 +96,49 @@ async def get_inventory_distribution(db: DBSessionDep) -> List[Dict[str, Any]]:
 @router.get("/production-trend")
 async def get_production_trend(db: DBSessionDep) -> List[Dict[str, Any]]:
     """Line chart for production output over time."""
-    # Last 7 days of completed production (simplified)
-    end = datetime.utcnow()
-    start = end - timedelta(days=7)
+    end = datetime.utcnow().date()
+    days = [end - timedelta(days=offset) for offset in range(6, -1, -1)]
 
-    stmt = (
-        select(
-            func.date(ProductionOrder.ActualCompletionDate).label("day"),
-            func.sum(ProductionOrder.OrderQuantity).label("qty")
-        )
-        .where(
-            ProductionOrder.Status == "Completed",
-            ProductionOrder.ActualCompletionDate >= start
-        )
-        .group_by("day")
-        .order_by("day")
+    stmt = select(
+        ProductionOrder.PlannedCompletionDate,
+        ProductionOrder.ActualCompletionDate,
+        ProductionOrder.OrderQuantity,
+    ).where(
+        (ProductionOrder.PlannedCompletionDate.is_not(None))
+        | (ProductionOrder.ActualCompletionDate.is_not(None))
     )
     rows = (await db.execute(stmt)).all()
 
-    return [{"date": str(r.day), "completed": float(r.qty or 0)} for r in rows]
+    planned_by_day: dict[date, float] = {day: 0.0 for day in days}
+    completed_by_day: dict[date, float] = {day: 0.0 for day in days}
+
+    def parse_date(value: Any) -> date | None:
+        if not value:
+            return None
+        if isinstance(value, datetime):
+            return value.date()
+        try:
+            return datetime.fromisoformat(str(value)).date()
+        except ValueError:
+            return None
+
+    for planned_date, actual_date, quantity in rows:
+        qty = float(quantity or 0)
+        parsed_planned = parse_date(planned_date)
+        parsed_actual = parse_date(actual_date)
+        if parsed_planned in planned_by_day:
+            planned_by_day[parsed_planned] += qty
+        if parsed_actual in completed_by_day:
+            completed_by_day[parsed_actual] += qty
+
+    return [
+        {
+            "day": day.strftime("%a"),
+            "planned": planned_by_day[day],
+            "completed": completed_by_day[day],
+        }
+        for day in days
+    ]
 
 
 @router.get("/workcenter-utilization")
