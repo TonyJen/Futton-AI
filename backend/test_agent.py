@@ -3,15 +3,22 @@ Clean test script for the AI agents (now that package __init__.py files are rest
 """
 
 import asyncio
+from pathlib import Path
+
+import pytest
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
 from app.agents.mrp_agent import MRPPlanningAgent
 from app.agents.inventory_agent import InventoryIntelligenceAgent
 
 
+DB_PATH = Path(__file__).resolve().parent / "data" / "futon_manufacturing.db"
+
+
+@pytest.mark.asyncio
 async def test_mrp_agent():
     print("\n=== Testing MRP Planning Agent ===")
-    engine = create_async_engine("sqlite+aiosqlite:///./data/futon_manufacturing.db", echo=False)
+    engine = create_async_engine(f"sqlite+aiosqlite:///{DB_PATH}", echo=False)
     AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False)
 
     async with AsyncSessionLocal() as db:
@@ -26,9 +33,10 @@ async def test_mrp_agent():
     await engine.dispose()
 
 
+@pytest.mark.asyncio
 async def test_inventory_agent():
     print("\n=== Testing Inventory Intelligence Agent ===")
-    engine = create_async_engine("sqlite+aiosqlite:///./data/futon_manufacturing.db", echo=False)
+    engine = create_async_engine(f"sqlite+aiosqlite:///{DB_PATH}", echo=False)
     AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False)
 
     async with AsyncSessionLocal() as db:

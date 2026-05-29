@@ -111,3 +111,5 @@ htmlcov/
 !backend/data/futon_manufacturing_sqlite.sql
 backend/data/futon_manufacturing.db-shm
 backend/data/futon_manufacturing.db-wal
+data/*.db-shm
+data/*.db-wal
