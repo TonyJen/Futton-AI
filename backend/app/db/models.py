@@ -20,7 +20,6 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     func,
-    Index,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -806,8 +805,6 @@ __all__ = [
     "WorkCenter",
     "ProductionOrder",
     "ProductionOrderMaterial",
-    "ProductionCompletion",
-    "QualityInspection",
     "Customer",
     "SalesOrder",
     "SalesOrderDetail",

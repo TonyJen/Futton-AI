@@ -213,6 +213,21 @@ For the most impressive walkthrough (especially the AI Supervisor), see:
 
 ---
 
+## Linting
+
+Run the project linters from the repository root:
+
+```powershell
+# Backend
+.\.venv\Scripts\python.exe -m ruff check backend --no-cache
+
+# Frontend
+cd frontend
+npm run lint
+```
+
+---
+
 ## Tech Stack
 
 **Backend**

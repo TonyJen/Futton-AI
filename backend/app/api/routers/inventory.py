@@ -16,8 +16,10 @@ router = APIRouter(prefix="/inventory", tags=["Inventory"])
 @router.get("", response_model=List[dict])
 async def list_inventory(db: DBSessionDep, warehouse: Optional[str] = None):
     """Basic inventory list (placeholder until full schema is aligned)."""
-    from app.db.models import Inventory as InventoryModel, Item as ItemModel
     from sqlalchemy import select
+
+    from app.db.models import Inventory as InventoryModel
+    from app.db.models import Item as ItemModel
 
     stmt = (
         select(InventoryModel, ItemModel)
@@ -52,13 +54,20 @@ async def list_inventory_transactions(
     limit: int = Query(50, le=200),
 ):
     """Return recent inventory transactions aligned with the current ORM schema."""
+    from sqlalchemy import desc, select
+
     from app.db.models import (
         InventoryTransaction as TxModel,
+    )
+    from app.db.models import (
         Item as ItemModel,
+    )
+    from app.db.models import (
         TransactionType as TransactionTypeModel,
+    )
+    from app.db.models import (
         Warehouse as WarehouseModel,
     )
-    from sqlalchemy import select, desc
 
     stmt = (
         select(TxModel, ItemModel, TransactionTypeModel, WarehouseModel)

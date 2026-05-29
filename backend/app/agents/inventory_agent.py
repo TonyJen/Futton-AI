@@ -4,7 +4,9 @@ Inventory Intelligence Agent — StateGraph implementation.
 
 import uuid
 from typing import Any, Dict
-from langgraph.graph import StateGraph, END
+
+from langgraph.graph import END, StateGraph
+
 from .base import BaseAgent
 from .state import AgentState
 

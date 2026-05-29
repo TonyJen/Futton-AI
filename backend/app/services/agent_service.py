@@ -4,9 +4,10 @@ Agent Service - handles proposal listing and basic agent metadata.
 
 from __future__ import annotations
 
-from typing import List, Dict, Any
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any, Dict, List
+
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import AgentAction
 

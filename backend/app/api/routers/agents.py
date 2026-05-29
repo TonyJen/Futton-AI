@@ -9,23 +9,23 @@ This router allows:
 All agent logic lives under app/agents/. All mutations go through approved execution paths.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Any, Dict, List, Optional
+
+from fastapi import APIRouter, HTTPException, Query
+from pydantic import BaseModel
 
 from app.core.dependencies import DBSessionDep
 from app.db.models import AgentAction
-from sqlalchemy.ext.asyncio import AsyncSession  # keep for type references if needed
 from app.schemas.agent import (
     AgentRunRequest,
     AgentRunResponse,
     ApprovalRequest,
     ApprovalResponse,
-    RejectionRequest,
     ProposalListResponse,
+    RejectionRequest,
 )
-from app.services.agent_service import get_agent_service
 from app.services.action_executor import get_executor
+from app.services.agent_service import get_agent_service
 from app.services.supervisor_service import chat_with_supervisor
 
 # Try to import approval workflow (may not exist yet)
@@ -35,8 +35,8 @@ except ImportError:
     ApprovalWorkflow = None
 
 # Import the two concrete agents (LangGraph)
-from app.agents.mrp_agent import MRPPlanningAgent
 from app.agents.inventory_agent import InventoryIntelligenceAgent
+from app.agents.mrp_agent import MRPPlanningAgent
 from app.agents.production_scheduler_agent import ProductionSchedulerAgent
 
 router = APIRouter(prefix="/agents", tags=["AI Agents (Phase 1)"])
@@ -176,7 +176,6 @@ async def approve_action_endpoint(
     db: DBSessionDep,
 ):
     """Human approves → real business change happens here."""
-    workflow = ApprovalWorkflow(db) if ApprovalWorkflow else None
     try:
         # Load action
         action = await db.get(AgentAction, action_id)
@@ -239,7 +238,6 @@ async def reject_action_endpoint(
 # AI SUPERVISOR (LLM-powered natural language interface)
 # =============================================================================
 
-from pydantic import BaseModel
 
 class SupervisorChatRequest(BaseModel):
     messages: List[Dict[str, str]]   # [{"role": "user" | "agent", "text": "..."}]

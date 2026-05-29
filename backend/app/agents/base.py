@@ -10,11 +10,12 @@ Provides:
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.agents.tools import get_manufacturing_tools
 from app.agents.approval import propose_action
+from app.agents.tools import get_manufacturing_tools
 from app.db.models import AgentConversation
 
 

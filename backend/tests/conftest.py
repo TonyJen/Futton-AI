@@ -7,13 +7,11 @@ from typing import AsyncGenerator, Generator
 
 import pytest
 import pytest_asyncio
-from httpx import ASGITransport, AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-
 from app.db.models import Base
 from app.db.session import get_async_db
 from app.main import app
-
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 # Use an in-memory SQLite database for tests (fast and isolated)
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"

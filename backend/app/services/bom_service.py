@@ -11,7 +11,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.db.models import BillOfMaterial, Item, UnitOfMeasure
+from app.db.models import BillOfMaterial, Item
 from app.schemas.bom import (
     BOMExplosionComponent,
     BOMExplosionResult,
@@ -160,7 +160,6 @@ async def get_full_bom_explosion(
     Top-level function expected by the /api/v1/items/{item_id}/bom router.
     Delegates to the full-featured BOMService implementation.
     """
-    from app.schemas.bom import BOMExplosionResult  # avoid circular import at module load
 
     service = BOMService(db)
     # Note: current implementation always excludes inactive components.

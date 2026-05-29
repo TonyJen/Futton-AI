@@ -10,23 +10,22 @@ Core operations for:
 from __future__ import annotations
 
 from datetime import datetime
-from typing import List, Optional, Dict, Any
+from typing import Any, Dict, List, Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.db.models import (
-    Supplier,
-    SupplierItem,
-    PurchaseOrder,
-    PurchaseOrderDetail,
-    Item,
     Inventory,
     InventoryTransaction,
+    Item,
+    PurchaseOrder,
+    PurchaseOrderDetail,
+    Supplier,
+    SupplierItem,
     TransactionType,
 )
-
 
 # =============================================================================
 # SUPPLIERS

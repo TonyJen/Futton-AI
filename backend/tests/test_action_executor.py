@@ -6,11 +6,10 @@ that performs real mutations after human approval of agent proposals.
 """
 
 import pytest
+from app.db.models import Inventory, Item, PurchaseOrder, PurchaseOrderDetail
+from app.services.action_executor import ActionExecutor
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.db.models import Item, Inventory, PurchaseOrder, PurchaseOrderDetail
-from app.services.action_executor import ActionExecutor
 
 
 @pytest.mark.asyncio

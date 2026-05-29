@@ -8,22 +8,20 @@ Mirrors the structure and quality of the Sales router.
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
 
 from app.core.deps import get_db
-from app.db.models import Supplier, PurchaseOrder
 from app.schemas.purchasing import (
-    SupplierRead,
     PurchaseOrderCreate,
     PurchaseOrderDetailReadFull,
     PurchaseOrderRead,
     ReceiveGoodsPayload,
+    SupplierRead,
 )
 from app.services.purchasing_service import (
-    list_suppliers,
     create_purchase_order,
-    list_purchase_orders,
     get_purchase_order,
+    list_purchase_orders,
+    list_suppliers,
     receive_goods,
 )
 

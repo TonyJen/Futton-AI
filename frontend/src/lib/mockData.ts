@@ -140,7 +140,7 @@ export function getBOMForItem(itemId: number): BOMComponent[] {
 
 // Simulate a small in-memory state for mutations during session
 let liveRecommendations = [...MOCK_RECOMMENDATIONS];
-let liveProductionOrders = [...MOCK_PRODUCTION_ORDERS];
+const liveProductionOrders = [...MOCK_PRODUCTION_ORDERS];
 let liveInventory = [...MOCK_INVENTORY];
 
 export function getLiveRecommendations() { return liveRecommendations; }

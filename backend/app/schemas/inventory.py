@@ -2,7 +2,7 @@
 Pydantic schemas for Inventory, Warehouses and Transactions.
 """
 
-from typing import List, Optional
+from typing import Optional
 
 from pydantic import Field
 

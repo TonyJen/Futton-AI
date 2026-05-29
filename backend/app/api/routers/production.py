@@ -11,17 +11,16 @@ Endpoints matching frontend expectations:
 from typing import List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
+from sqlalchemy import func, select
+from sqlalchemy.orm import selectinload
 
 from app.core.dependencies import DBSessionDep
-from app.db.models import WorkCenter as WorkCenterModel, ProductionOrder as ProductionOrderModel
+from app.db.models import ProductionOrder as ProductionOrderModel
+from app.db.models import WorkCenter as WorkCenterModel
 from app.schemas.production import (
     ProductionOrderDetail,
-    ProductionOrderFilter,
-    ProductionOrderRead,
 )
 from app.services.production_service import ProductionService
-from sqlalchemy import select, func
-from sqlalchemy.orm import selectinload
 
 router = APIRouter(prefix="/production", tags=["Production"])
 
@@ -35,7 +34,6 @@ async def list_production_orders(
     priority_max: Optional[int] = Query(None, le=10),
 ) -> List[dict]:
     """List production orders shaped for the Production page frontend (with names)."""
-    from app.db.models import Item as ItemModel, WorkCenter as WorkCenterModel
 
     stmt = (
         select(ProductionOrderModel)
@@ -101,7 +99,7 @@ async def list_workcenters(db: DBSessionDep) -> List[dict]:
     Matches the shape expected by the Production page (WorkCenter TS interface).
     """
     # Get all active work centers
-    stmt = select(WorkCenterModel).where(WorkCenterModel.IsActive == True)
+    stmt = select(WorkCenterModel).where(WorkCenterModel.IsActive)
     result = await db.execute(stmt)
     work_centers = result.scalars().all()
 

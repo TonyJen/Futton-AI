@@ -3,14 +3,13 @@ Tests for the manufacturing tools used by agents.
 """
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.agents.tools import (
+    explode_bill_of_materials,
     find_low_stock_and_shortages,
     get_item_inventory_status,
-    explode_bill_of_materials,
     run_abc_analysis,
 )
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.mark.asyncio

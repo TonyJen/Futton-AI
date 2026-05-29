@@ -2,6 +2,7 @@
 
 from .config import get_settings, settings
 
+
 def get_db():
     from .deps import get_db as _get_db
     return _get_db

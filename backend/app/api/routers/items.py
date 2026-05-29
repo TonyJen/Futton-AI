@@ -9,15 +9,13 @@ Endpoints:
 from typing import List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
-
-from app.core.dependencies import DBSessionDep
-from app.schemas.item import ItemRead
-from app.schemas.bom import BOMExplosionResult
-from app.services.bom_service import get_full_bom_explosion
-
-from app.db.models import Item as ItemModel
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
+
+from app.core.dependencies import DBSessionDep
+from app.db.models import Item as ItemModel
+from app.schemas.bom import BOMExplosionResult
+from app.services.bom_service import get_full_bom_explosion
 
 router = APIRouter(prefix="/items", tags=["Items & BOM"])
 

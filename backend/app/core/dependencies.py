@@ -5,10 +5,12 @@ Some code expects app.core.dependencies.DBSessionDep.
 We re-export from deps.py.
 """
 
-from .deps import get_db as _get_db
+from typing import Annotated
+
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Annotated
+
+from .deps import get_db as _get_db
 
 # Common dependency used across the app
 DBSessionDep = Annotated[AsyncSession, Depends(_get_db)]

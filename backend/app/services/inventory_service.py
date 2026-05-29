@@ -7,10 +7,9 @@ Used by Inventory Agent tools and also available to reports/dashboard.
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from decimal import Decimal
 from typing import Any, Dict, List, Optional
 
-from sqlalchemy import select, func, and_
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import Inventory, InventoryTransaction, Item, ItemType

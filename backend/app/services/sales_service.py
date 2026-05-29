@@ -9,23 +9,21 @@ Handles business logic for:
 from __future__ import annotations
 
 from datetime import datetime
-from typing import List, Optional
+from typing import Optional
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.db.models import (
+    Item,
+    SalesOrder,
+    SalesOrderDetail,
     SalesQuote,
     SalesQuoteDetail,
     SalesReturn,
     SalesReturnDetail,
-    SalesOrder,
-    SalesOrderDetail,
-    Customer,
-    Item,
 )
-
 
 # =============================================================================
 # QUOTE SERVICES
@@ -115,7 +113,6 @@ async def convert_quote_to_order(db: AsyncSession, quote_id: int) -> SalesOrder:
         raise ValueError("Only accepted quotes can be converted to orders")
 
     # Create Sales Order
-    from app.db.models import SalesOrderDetail
 
     order = SalesOrder(
         OrderNumber=await get_next_sales_order_number(db),

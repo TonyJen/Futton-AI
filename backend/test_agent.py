@@ -6,11 +6,9 @@ import asyncio
 from pathlib import Path
 
 import pytest
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
-
-from app.agents.mrp_agent import MRPPlanningAgent
 from app.agents.inventory_agent import InventoryIntelligenceAgent
-
+from app.agents.mrp_agent import MRPPlanningAgent
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 DB_PATH = Path(__file__).resolve().parent / "data" / "futon_manufacturing.db"
 

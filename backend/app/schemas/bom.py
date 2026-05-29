@@ -6,6 +6,7 @@ Rich models matching the actual implementation in bom_service.explode_bom.
 from __future__ import annotations
 
 from typing import List, Optional
+
 from pydantic import BaseModel, ConfigDict, Field
 
 

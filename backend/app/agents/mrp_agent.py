@@ -11,11 +11,9 @@ Uses explicit nodes for:
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, Dict
 
-from langgraph.graph import StateGraph, END
-from sqlalchemy.ext.asyncio import AsyncSession
+from langgraph.graph import END, StateGraph
 
 from .base import BaseAgent
 from .state import AgentState
@@ -101,7 +99,6 @@ class MRPPlanningAgent(BaseAgent):
         proposals_made = 0
 
         shortages = state.get("current_data", {}).get("shortages", [])
-        bom_data = state.get("current_data", {}).get("bom", {})
 
         # Smarter proposal generation using ABC classification when available
         abc_lookup = {item["item_id"]: item for item in state.get("current_data", {}).get("abc", [])}

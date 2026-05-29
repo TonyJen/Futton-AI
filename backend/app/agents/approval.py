@@ -10,10 +10,11 @@ This module enforces the "propose only" rule:
 from __future__ import annotations
 
 import json
-from typing import Any, Dict, Optional
+from typing import Any, Dict
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import AgentAction, AgentRecommendation, AgentAuditLog
+from app.db.models import AgentAction, AgentAuditLog
 
 
 async def propose_action(

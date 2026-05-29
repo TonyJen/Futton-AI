@@ -9,12 +9,17 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 from typing import Any, Dict, List
+
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
 
 from app.db.models import (
-    Item, Inventory, BillOfMaterials, ProductionOrder, ProductionOrderMaterial,
-    PurchaseOrder, SupplierItem, InventoryTransaction, TransactionType
+    BillOfMaterials,
+    Inventory,
+    InventoryTransaction,
+    Item,
+    ProductionOrder,
+    TransactionType,
 )
 
 
@@ -87,7 +92,7 @@ async def run_abc_analysis(db: AsyncSession) -> List[Dict[str, Any]]:
     B = Medium importance
     C = Low turnover / low value
     """
-    from app.db.models import Item, InventoryTransaction
+    from app.db.models import Item
 
     # Get all items with their current inventory value
     stmt = select(Item, Inventory).join(Inventory, Item.ItemID == Inventory.ItemID, isouter=True)
@@ -180,7 +185,7 @@ async def calculate_mrp_requirements(db: AsyncSession, item_id: int, quantity: f
 
 async def get_work_center_utilization(db: AsyncSession) -> List[Dict[str, Any]]:
     """Returns current work center capacity and active orders (for scheduler)."""
-    from app.db.models import WorkCenter, ProductionOrder
+    from app.db.models import WorkCenter
     stmt = select(WorkCenter)
     wcs = (await db.execute(stmt)).scalars().all()
     return [

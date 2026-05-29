@@ -6,12 +6,11 @@ They must never directly mutate business data.
 """
 
 import pytest
+from app.agents.inventory_agent import InventoryIntelligenceAgent
+from app.agents.mrp_agent import MRPPlanningAgent
+from app.db.models import AgentAction, PurchaseOrder
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.agents.mrp_agent import MRPPlanningAgent
-from app.agents.inventory_agent import InventoryIntelligenceAgent
-from app.db.models import AgentAction, PurchaseOrder
 
 
 @pytest.mark.asyncio

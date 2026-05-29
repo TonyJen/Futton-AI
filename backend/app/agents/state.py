@@ -6,7 +6,7 @@ This is the shared state passed between nodes in the StateGraph.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, TypedDict, Optional
+from typing import Any, Dict, List, Optional, TypedDict
 
 
 class AgentState(TypedDict, total=False):

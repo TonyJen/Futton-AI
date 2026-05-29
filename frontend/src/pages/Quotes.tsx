@@ -181,7 +181,7 @@ export default function Quotes() {
     }
     const payload = {
       customerId: Number(cqCustomerId),
-      details: cqLines.map((ln, _idx) => ({
+      details: cqLines.map((ln) => ({
         itemId: ln.itemId,
         quantity: ln.quantity,
         unitPrice: ln.unitPrice,

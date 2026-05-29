@@ -5,16 +5,18 @@ Provides aggregated data for the main Dashboard and Reports pages.
 These endpoints were previously missing, causing 404s.
 """
 
-from fastapi import APIRouter
-from sqlalchemy import select, func
-from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List, Dict, Any
 from datetime import datetime, timedelta
+from typing import Any, Dict, List
+
+from fastapi import APIRouter
+from sqlalchemy import func, select
 
 from app.core.dependencies import DBSessionDep
 from app.db.models import (
-    Item, Inventory, ProductionOrder, SalesOrder, SalesQuote, 
-    WorkCenter, InventoryTransaction
+    Inventory,
+    Item,
+    ProductionOrder,
+    WorkCenter,
 )
 
 router = APIRouter(prefix="/dashboard", tags=["Dashboard"])

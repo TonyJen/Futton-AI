@@ -97,6 +97,7 @@ htmlcov/
 .tox/
 .nox/
 .cache/
+.ruff_cache/
 
 # ------------------
 # Misc

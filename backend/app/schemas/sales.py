@@ -4,10 +4,10 @@ Sales & CRM Pydantic Schemas (Phase 2)
 
 from __future__ import annotations
 
-from typing import List, Optional
-from pydantic import BaseModel, Field
 from datetime import date
+from typing import List, Optional
 
+from pydantic import BaseModel
 
 # =============================================================================
 # CUSTOMER (extended)

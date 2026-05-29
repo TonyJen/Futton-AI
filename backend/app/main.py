@@ -20,6 +20,7 @@ from fastapi.responses import JSONResponse
 
 from app.core.config import get_settings
 from app.db.session import close_db, init_db
+
 # Try to import the agents router from the new location first
 try:
     from app.api.routers.agents import router as agents_router

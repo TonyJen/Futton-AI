@@ -5,10 +5,10 @@ Suppliers, Supplier Items (pricing), Purchase Orders, Receiving
 
 from __future__ import annotations
 
-from typing import List, Optional
-from pydantic import BaseModel, Field
 from datetime import date
+from typing import List, Optional
 
+from pydantic import BaseModel, Field
 
 # =============================================================================
 # SUPPLIER

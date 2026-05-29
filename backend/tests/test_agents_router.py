@@ -7,6 +7,7 @@ These tests cover the public interface that the frontend AI Hub uses.
 import pytest
 from httpx import AsyncClient
 
+
 @pytest.mark.asyncio
 class TestAgentsRouter:
     async def test_available_agents(self, client: AsyncClient):

@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
 
 from app.core.deps import get_db
@@ -20,12 +20,9 @@ from app.db.models import (
     SalesOrderDetail,
     SalesQuote,
     SalesQuoteDetail,
-    SalesReturn,
     SalesRep,
+    SalesReturn,
 )
-
-logger = logging.getLogger(__name__)
-from app.schemas.common import MessageResponse
 from app.schemas.sales import (
     CustomerCreate,
     CustomerRead,
@@ -36,16 +33,18 @@ from app.schemas.sales import (
     SalesQuoteCreate,
     SalesQuoteDetailReadFull,
     SalesQuoteRead,
+    SalesRepRead,
     SalesReturnCreate,
     SalesReturnRead,
-    SalesRepRead,
 )
 from app.services.sales_service import (
-    create_quote,
     convert_quote_to_order,
+    create_quote,
     create_return,
     get_next_sales_order_number,
 )
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/sales", tags=["Sales"])
 
