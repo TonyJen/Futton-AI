@@ -160,6 +160,27 @@ This script will:
 
 **Important:** The AI Supervisor uses a real LLM. You will need an API key (xAI recommended).
 
+### Docker Compose
+
+You can also run the full stack with Docker:
+
+```powershell
+docker compose up --build
+```
+
+This starts:
+
+- FastAPI backend on `http://localhost:8000`
+- Frontend on `http://localhost:5173`
+
+If you want the AI Supervisor to use your real provider keys, point Compose at the backend env file:
+
+```powershell
+docker compose --env-file backend/.env up --build
+```
+
+The backend container uses `backend/data/futon_manufacturing.db`, and it seeds that location automatically if the file is missing.
+
 ### Manual Setup
 
 #### 1. Backend

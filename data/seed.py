@@ -23,7 +23,7 @@ from pathlib import Path
 # Configuration
 SCRIPT_DIR = Path(__file__).parent.resolve()
 SQL_FILE = SCRIPT_DIR / "futon_manufacturing_sqlite.sql"
-DB_FILE = SCRIPT_DIR / "futon_manufacturing.db"
+DB_FILE = Path(os.environ.get("FUTON_DB_FILE", SCRIPT_DIR / "futon_manufacturing.db")).resolve()
 
 def execute_sql_script(conn: sqlite3.Connection, sql_script: str) -> None:
     """Execute a multi-statement SQL script safely, skipping empty statements."""
@@ -74,6 +74,8 @@ def main():
     if not SQL_FILE.exists():
         print(f"ERROR: SQL file not found: {SQL_FILE}")
         sys.exit(1)
+
+    DB_FILE.parent.mkdir(parents=True, exist_ok=True)
 
     # Remove old DB for clean seed (as per "complete, ready-to-run")
     if DB_FILE.exists():

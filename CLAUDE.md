@@ -10,6 +10,7 @@
 - Frontend URL: `http://localhost:5173`
 - Database: SQLite
 - AI Supervisor requires API keys in `backend/.env`
+- Docker stack: `docker-compose.yml` with `backend/Dockerfile` and `frontend/Dockerfile`
 
 ## Usage
 
@@ -26,6 +27,23 @@ This script:
 - seeds the database if needed
 - starts the FastAPI backend in a separate PowerShell window
 - starts the Vite frontend in the current window
+
+### Docker startup
+
+```powershell
+docker compose up --build
+```
+
+- Backend is exposed on `http://localhost:8000`
+- Frontend is exposed on `http://localhost:5173`
+- Frontend traffic to `/api/*` is proxied to the backend container by Nginx
+- The backend container uses `backend/data/futon_manufacturing.db` and seeds that path automatically when it is missing
+
+To pass real AI provider keys into Compose, use:
+
+```powershell
+docker compose --env-file backend/.env up --build
+```
 
 ### Manual startup
 
